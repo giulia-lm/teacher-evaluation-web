@@ -1,0 +1,182 @@
+@charset "utf-8";
+
+/* Seccion de Formulario a contestar por alumnxs*/
+
+section{
+    font-family: "Fugaz One", sans-serif;
+
+}
+
+.available-forms-section {
+  padding-top: 180px;
+  padding-bottom: 100px;
+  background-color: var(--light-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+/* Título y texto introductorio */
+.available-forms-textBox {
+  text-align: center;
+  max-width: 700px;
+  margin-bottom: 2rem;
+}
+
+.available-forms-textBox h2 {
+  color: var(--orange);
+  font-family: "Fugaz One", sans-serif;
+  font-size: 2.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.available-forms-textBox p {
+  color: var(--brown);
+  font-family: "Nunito", sans-serif;
+  font-size: 1.4rem;
+}
+
+/* Contenedor de tarjetas de encuestas */
+.available-forms-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  width: 90%;
+  max-width: 1100px;
+}
+
+/* Tarjetas individuales */
+.form-card {
+  background-color: #fff;
+  border: 2px solid var(--orange);
+  border-radius: 20px;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.form-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0px 6px 14px rgba(0, 0, 0, 0.15);
+}
+
+/* Títulos dentro de las tarjetas */
+.form-card h3 {
+  color: var(--brown);
+  font-family: "Fugaz One", sans-serif;
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.form-card p {
+  font-family: "Nunito", sans-serif;
+  color: var(--brown);
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Botón dentro de la tarjeta */
+.btn-open-form {
+  background-color: var(--orange);
+  color: var(--brown);
+  border: none;
+  border-radius: 12px;
+  padding: 0.8rem 1.6rem;
+  font-size: 1.3rem;
+  font-family: "Fugaz One", sans-serif;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.3s ease;
+}
+
+.btn-open-form:hover {
+  opacity: 0.9;
+  transform: scale(1.05);
+}
+
+/* ============================= */
+/* Estilo del formulario de encuesta */
+/* ============================= */
+
+.survey-section {
+  font-family: "Nunito", sans-serif; /* Fuente más legible para preguntas */
+  padding-top: 150px;
+  background-color: var(--light-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+#survey-title {
+  font-family: "Fugaz One", sans-serif;
+  color: var(--orange);
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.question {
+  text-align: center;
+  font-family: "Fugaz One", sans-serif;
+  color: var(--orange);
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+}
+
+.options {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-bottom: 2rem;
+}
+
+.options label {
+  font-family: "Nunito", sans-serif;
+  font-size: 1.2rem;
+  color: var(--brown);
+  cursor: pointer;
+}
+
+textarea {
+  width: 70%;
+  max-width: 600px;
+  height: 130px;
+  padding: 10px;
+  border: 2px solid var(--brown);
+  border-radius: 10px;
+  font-family: "Nunito", sans-serif;
+  font-size: 1rem;
+  color: var(--brown);
+  resize: vertical;
+  margin-bottom: 1.5rem;
+}
+
+textarea:focus {
+  border-color: var(--orange);
+  outline: none;
+  box-shadow: 0 0 5px rgba(255, 136, 0, 0.5);
+}
+
+/* ============================= */
+/* Botón de envío bonito */
+/* ============================= */
+
+.btn-submit {
+  background-color: var(--orange);
+  border: none;
+  border-radius: 15px;
+  padding: 0.8rem 2rem;
+  cursor: pointer;
+  font-family: "Fugaz One", sans-serif;
+  color: var(--brown);
+  font-size: 1.4rem;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.btn-submit:hover {
+  transform: translateY(-3px);
+  box-shadow: 0px 4px 10px rgba(255, 136, 0, 0.3);
+  opacity: 0.9;
+}

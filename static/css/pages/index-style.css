@@ -1,0 +1,87 @@
+
+/* User selection Section */
+.outlined-text {
+  font-family: "Fugaz One", sans-serif;
+  font-size: 5rem;
+  color: var(--orange);
+  margin-bottom: 1.5rem;
+  line-height: 1.7;
+  text-align: center;
+  -webkit-text-stroke: 2px var(--brown);
+}
+
+.users {
+  margin: 3rem 3rem;
+  text-align: center;
+}
+
+.users-grid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 3rem;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.users-item {
+  width: 350px;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  background-color: var(--light-bg);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.users-item:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+}
+
+.users-image {
+  width: 100%;
+  height: 400px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  transition: transform 0.4s ease;
+}
+
+.users-item:hover .users-image {
+  transform: scale(1.05);
+}
+
+.users-item:nth-child(1) .users-image {
+  background-image: url('../img/alumnx-icon.png');
+}
+
+.users-item:nth-child(2) .users-image {
+  background-image: url('../img/teacher-icon.png');
+}
+
+.users-item:nth-child(3) .users-image {
+  background-image: url('../img/admin-icon.png');
+}
+
+.users-content {
+  background-color: var(--brown);
+  padding: 0.8rem 0;
+  transition: background-color 0.3s ease;
+}
+
+.users-item:hover .users-content {
+  background-color: var(--orange);
+}
+
+.users-item a {
+  text-decoration: none;
+}
+
+
+.users-content h4 {
+  font-family: "Fugaz One", sans-serif;
+  text-decoration: none;
+  font-size: 1.6rem;
+  color: white;
+  margin: 0;
+  letter-spacing: 1px;
+}

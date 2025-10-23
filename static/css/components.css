@@ -1,0 +1,184 @@
+@charset "utf-8";
+
+
+/*
+
+estilo de los forms de login, 
+de la bienvenida e imagen 
+
+*/
+
+/* LOGIN form */
+
+.login-section {
+  padding-top: 72px; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 90vh;
+  gap: 4rem;
+  background-color: var(--light-bg);
+}
+
+.login-image {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-image img.avatar {
+  width: 280px;
+  height: auto;
+  border-radius: 50%;
+  transition: transform 0.4s ease, filter 0.4s ease;
+}
+
+.login-image img.avatar:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.3));
+}
+
+.login-box {
+  background-color: var(--yellow);
+  border-radius: 20px;
+  padding: 3rem 3.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  width: 380px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  font-family: "Fugaz One", sans-serif;
+  color: var(--brown);
+}
+
+/* inputs */
+input[type=text], input[type=password] {
+  font-size: 1.4rem;
+  border-radius: 10px;
+  width: 100%;
+  padding: 12px 20px;
+  box-sizing: border-box;
+  border: 2px solid var(--brown);
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+input[type=text]:focus,
+input[type=password]:focus {
+  border-color: var(--orange);
+}
+
+/* botón */
+.login-button {
+    margin-top: 1.2rem; 
+  background-color: var(--orange);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  width: 100%;
+  font-family: "Fugaz One", sans-serif;
+  color: var(--brown);
+  font-size: 1.6rem;
+  transition: transform 0.2s ease, opacity 0.3s ease;
+}
+
+.login-button:hover {
+  opacity: 0.85;
+  transform: scale(1.03);
+}
+
+
+span.psw {
+  display: block;
+  text-align: center;  
+  margin-top: 1rem;
+  color: var(--brown);
+  font-size: 1rem;
+}
+
+span.psw a {
+  color: var(--orange);
+  text-decoration: none;
+}
+
+span.psw a:hover {
+  text-decoration: underline;
+}
+
+/* responsive */
+@media (max-width: 900px) {
+  .login-section {
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .login-image img.avatar {
+    width: 180px;
+  }
+}
+
+/* Seccion de Bienvenida con imagen */
+
+.welcome-section{
+    padding-top: 200px; 
+  display:contents;
+  justify-content: center;
+  align-items: center;
+ 
+  background-color: var(--light-bg);
+}
+
+.welcome-textBox {
+  
+  justify-content: center;
+  align-items: center;
+
+  background-color: var(--light-bg);
+}
+
+.welcome-textBox h2{
+  text-align: center;
+  font-family: "Fugaz One", sans-serif;
+  color: var(--orange);
+  font-size: 6rem;
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: var(--brown);
+}
+
+.welcome-image {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.welcome-image img.avatar {
+  width: 200px;
+  height: auto;
+  border-radius: 50%;
+  transition: transform 0.4s ease, filter 0.4s ease;
+}
+
+
+/* botones */
+.button {
+  margin-top: 1.2rem; 
+  background-color: var(--orange);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  width: 100%;
+  font-family: "Fugaz One", sans-serif;
+  color: var(--brown);
+  font-size: 1.6rem;
+  transition: transform 0.2s ease, opacity 0.3s ease;
+}
+
+.login-button:hover {
+  opacity: 0.85;
+  transform: scale(1.03);
+}

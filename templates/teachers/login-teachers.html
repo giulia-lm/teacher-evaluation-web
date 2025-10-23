@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluación Docente</title>
+
+    <!-- link a los styles -->
+    <link href="../../static/css/base.css" rel="stylesheet">
+    <link href="../../static/css/components.css" rel="stylesheet">
+    <link href="../../static/css/layout.css" rel="stylesheet">
+
+    <link rel="icon" type="image/jpg" href="../../static/css/img/teacher-icon.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Fugaz+One&family=Orbitron:wght@400..900&family=VT323&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <div class="logo"><img src="../../static/css/img/teacher-icon.png" width="40" height="60">
+            Evaluación Docente
+            </div>
+            <ul class="nav-links">
+                <li><a href="/">Cambiar tipo de usuarix</a></li>
+                <li><a href="footer">Contacto</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <ul class="mobile-nav-links">
+          <li><a href="/">Cambiar tipo de usuarix</a></li>
+          <li><a href="#footer">Contacto</a></li>
+        </ul>
+    </div>
+
+
+<section class="login-section">
+
+  <!-- imagen a la izquierda -->
+  <div class="login-image">
+    <img src="../../static/css/img/teacher-icon.png" class="avatar">
+  </div>
+
+  <!-- caja del login a la derecha -->
+  <div class="login-box">
+    <form action="{{ url_for('login') }}" method="post">
+      <div class="login-container">
+        <label for="uname"><b>Matrícula</b></label>
+        <input type="text" placeholder="1234567" name="uname" required>
+
+        <label for="psw"><b>Contraseña</b></label>
+        <input type="password" placeholder="Ingresa contraseña" name="psw" required>
+
+        <button type="submit" class="login-button">Entrar</button>
+        <span class="psw">¿Olvidó su <a href="#">contraseña</a>?</span>
+      </div>
+    </form>
+
+    {% if error %}
+      <p style="color:red;">{{ error }}</p>
+    {% endif %}
+  </div>
+
+</section>
+
+
+<!-- Footer -->
+  <footer class="footer">
+     <div class="container">
+      <div class="row">
+        <div class="footer-col">
+          <h4>Evaluación Docente</h4>
+          <ul>
+            <li><a href="about.html">Sobre nosotros</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Contáctanos</h4>
+          <ul>
+            <li><a href="#">evaluaciondocente@uaem.edu.mx</a></li>
+            <li><a href="#">000000 (Llamadas)</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Síguenos</h4>
+          <div class="social-links">
+            <a href="https://www.facebook.com/cccmty/?locale=es_LA"><i class="fab fa-facebook-f"></i></a>
+            <a href="https://www.instagram.com/colegio.cristobalcolon.mty/?fbclid=IwY2xjawM8a4VleHRuA2FlbQIxMABicmlkETFiQXdjY0lVZkY2bmhBbDFhAR4HDNXPP2MYBImxhU2n7SItrSkisMgRafUG_2o0U6dvmrX68UIhgwmk_Nh0DQ_aem_tv28U4g3-3Nv-36WvzmEhQ"><i class="fab fa-instagram"></i></a>
+          </div>
+        </div>
+      </div>
+     </div>
+  </footer>
+
+
+
+  <script type="text/javascript" src="dynamic.js"></script>	
+</body>
+</html>
