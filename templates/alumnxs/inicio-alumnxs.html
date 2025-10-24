@@ -30,9 +30,8 @@
             Evaluación Docente
             </div>
             <ul class="nav-links">
-                <li><a href="inicio-alumnxs.html">Inicio</a></li>
-                <li><a href="planes.html">Cuestionarios</a></li>
-                <li><a href="contacto.html">Ayuda</a></li>
+                <li><a href="inicio-alumnxs">Inicio</a></li>
+                <li><a href="#">Ayuda</a></li>
             </ul>
         </div>
     </nav>
@@ -40,9 +39,8 @@
     <!-- Mobile Menu -->
     <div class="mobile-menu" id="mobileMenu">
         <ul class="mobile-nav-links">
-            <li><a href="inicio-alumnxs.html">Inicio</a></li>
-            <li><a href="planes.html">Cuestionarios</a></li>
-                <li><a href="contacto.html">Ayuda</a></li>
+            <li><a href="inicio-alumnxs">Inicio</a></li>
+            <li><a href="#">Ayuda</a></li>
         </ul>
     </div>
 
@@ -70,11 +68,13 @@
 
 {% for encuesta in encuestas %}  
   <div class="available-forms-container">
+    <div class="form-card">
+      <h3>{{ encuesta.title }}</h3>
+      <p>{{ encuesta.description }}</p>
+      <button class = "btn-open-form"> <a href="{{ url_for('contestar_encuesta', id_encuesta=encuesta.id) }}">Contestar</a></button> 
+    </div>
+    
 
-    <h3>{{ encuesta.title }}</h3>
-    <p>{{ encuesta.description }}</p>
-
-    <a href="{{ url_for('contestar_encuesta', id_encuesta=encuesta.id) }}">Contestar</a>
   </div>
 {% endfor %}
 

@@ -28,9 +28,8 @@
             Evaluación Docente
             </div>
             <ul class="nav-links">
-                <li><a href="inicio-alumnxs.html">Inicio</a></li>
-                <li><a href="planes.html">Cuestionarios</a></li>
-                <li><a href="contacto.html">Ayuda</a></li>
+                <li><a href="inicio-alumnxs">Inicio</a></li>
+                <li><a href="#">Ayuda</a></li>
             </ul>
         </div>
     </nav>
@@ -38,46 +37,45 @@
     <!-- Mobile Menu -->
     <div class="mobile-menu" id="mobileMenu">
         <ul class="mobile-nav-links">
-            <li><a href="inicio-alumnxs.html">Inicio</a></li>
-            <li><a href="planes.html">Cuestionarios</a></li>
-                <li><a href="contacto.html">Ayuda</a></li>
+            <li><a href="inicio-alumnxs">Inicio</a></li>
+            <li><a href="#">Ayuda</a></li>
         </ul>
     </div>
 
 <!-- FORMULARIO de materias -->
+  <h2 class = "survey-title">{{form_title.title}}</h2>
 <section class="survey-section">
-  <h2>Encuesta sobre el profesor</h2>
-  <form action="../../backend/submit_survey.php" method="post" class="survey-form">
+
+  <form action="{{ url_for('enviar_respuestas') }}" method="post" class="survey-form" aria-labelledby="survey-title">
     <input type="hidden" name="survey_type" value="materia">
     <hr>
 
-    <p><b>Responde las siguientes preguntas:</b></p>
+    <p class="intro"><strong>Responde las siguientes preguntas:</strong></p>
 
-    <label class="question" >1. El profesor explicó los temas de manera clara.</label><br>
-    <div class="options">
-        <input type="radio" name="q1" value="1" required> Muy en desacuerdo
-        <input type="radio" name="q1" value="2"> En desacuerdo
-        <input type="radio" name="q1" value="3"> Neutral
-        <input type="radio" name="q1" value="4"> De acuerdo
-        <input type="radio" name="q1" value="5"> Muy de acuerdo
-        <br><br>
+    {% for q in questions %}
+    <div class="question-card">
+      <label class="question" id="qlabel-{{ q.id }}">{{ q.texto_pregunta }}</label>
+
+      {% if q.tipo == "multiple" %}
+      <div class="options" role="radiogroup" aria-labelledby="qlabel-{{ q.id }}">
+        {% for option in options[q.id] %}
+        <label class="option">
+          <input type="radio" name="q{{ q.id }}" value="{{ option.id }}" required>
+          <span class="option-text">{{ option.choice_text }}</span>
+        </label>
+        {% endfor %}
+      </div>
+
+      {% elif q.tipo == "texto" %}
+      <!-- Nota: si quieres múltiples textareas, cambia el name para incluir q.id -->
+      <textarea name="q{{ q.id }}_comments" rows="4" placeholder="Escribe tu respuesta aquí..." aria-label="{{ q.texto_pregunta }}"></textarea>
+      {% endif %}
     </div>
+    {% endfor %}
 
-    <label class="question">2. El profesor fomentó la participación y resolvió dudas.</label><br>
-    <div class="options">
-        <input type="radio" name="q2" value="1" required> Muy en desacuerdo
-        <input type="radio" name="q2" value="2"> En desacuerdo
-        <input type="radio" name="q2" value="3"> Neutral
-        <input type="radio" name="q2" value="4"> De acuerdo
-        <input type="radio" name="q2" value="5"> Muy de acuerdo
-        <br><br>
+    <div class="submit-wrap">
+      <button type="submit" class="btn-submit">Enviar encuesta</button>
     </div>
-    
-    <label class="question">3. ¿Tienes algún comentario adicional?</label><br>
-    <textarea name="comments" rows="4" placeholder="Escribe tu opinión..."></textarea>
-
-    <br><br>
-    <button type="submit">Enviar encuesta</button>
   </form>
 </section>
 
@@ -110,9 +108,5 @@
       </div>
      </div>
   </footer>
-
-
-
-  <script type="text/javascript" src="dynamic.js"></script>	
 </body>
 </html>

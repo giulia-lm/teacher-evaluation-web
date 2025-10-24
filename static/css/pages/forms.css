@@ -90,93 +90,150 @@ section{
   transition: transform 0.2s ease, opacity 0.3s ease;
 }
 
+.btn-open-form a{
+  text-decoration: none;
+  color: var(--brown);
+}
+
 .btn-open-form:hover {
   opacity: 0.9;
   transform: scale(1.05);
 }
 
-/* ============================= */
 /* Estilo del formulario de encuesta */
-/* ============================= */
 
-.survey-section {
-  font-family: "Nunito", sans-serif; /* Fuente más legible para preguntas */
-  padding-top: 150px;
-  background-color: var(--light-bg);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2rem;
-}
-
-#survey-title {
-  font-family: "Fugaz One", sans-serif;
-  color: var(--orange);
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
-  text-align: center;
-}
-
-.question {
-  text-align: center;
-  font-family: "Fugaz One", sans-serif;
-  color: var(--orange);
-  font-size: 1.8rem;
-  margin-bottom: 1rem;
-}
-
-.options {
+.survey-section{
+  width: 100%;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
-  gap: 40px;
-  margin-bottom: 2rem;
+  background-color: var(--light-bg);
+  box-sizing: border-box;
+  align-items: center;
+  text-align: center;
 }
 
-.options label {
+/* Título */
+.survey-title{
+  padding-top: 50px;
+  font-family: "Fugaz One", sans-serif;
+  color: var(--orange);
+  font-size: 2.2rem;
+  margin: 0 0 10px;
+  text-align: center;
+}
+
+/* Intro */
+.intro{
+  text-align: center;
+  margin-bottom: 18px;
   font-family: "Nunito", sans-serif;
-  font-size: 1.2rem;
-  color: var(--brown);
-  cursor: pointer;
+
 }
 
-textarea {
-  width: 70%;
-  max-width: 600px;
-  height: 130px;
-  padding: 10px;
+/* Pregunta */
+.question{
+  display: block;
+  font-family: "Fugaz One", sans-serif;
+  color: var(--orange);
+  font-size: 1.25rem;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Opciones: fila flexible y responsive */
+.options{
+  display: flex;
+  text-align: center;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  align-items: center;
+}
+
+/* Etiqueta que envuelve input + texto */
+.option{
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+  border: 1px solid transparent;
+}
+
+/* estilo del radio sin alterar comportamiento nativo */
+.option input[type="radio"]{
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--orange); /* modern browsers */
+}
+
+/* Texto de opción */
+.option-text{
+  font-family: "Nunito", sans-serif;
+  font-size: 1rem;
+  color: var(--brown);
+}
+
+.option input[type="radio"]:focus + .option-text,
+.option:focus-within{
+  box-shadow: 0 0 0 3px rgba(255,138,0,0.12);
+}
+
+/* Textarea */
+textarea{
+  width: 100%;
+  max-width: 100%;
+  min-height: 110px;
+  padding: 12px;
   border: 2px solid var(--brown);
   border-radius: 10px;
   font-family: "Nunito", sans-serif;
   font-size: 1rem;
   color: var(--brown);
   resize: vertical;
-  margin-bottom: 1.5rem;
+  box-sizing: border-box;
 }
 
-textarea:focus {
+/* Focus textarea */
+textarea:focus{
   border-color: var(--orange);
   outline: none;
-  box-shadow: 0 0 5px rgba(255, 136, 0, 0.5);
+  box-shadow: 0 0 8px rgba(255,138,0,0.15);
 }
 
-/* ============================= */
-/* Botón de envío bonito */
-/* ============================= */
+/* Botón */
+.submit-wrap{
+  display:flex;
+  justify-content:center;
+  margin-top: 18px;
+}
 
-.btn-submit {
+.btn-submit{
   background-color: var(--orange);
   border: none;
-  border-radius: 15px;
-  padding: 0.8rem 2rem;
+  border-radius: 12px;
+  padding: 0.9rem 2.4rem;
   cursor: pointer;
   font-family: "Fugaz One", sans-serif;
-  color: var(--brown);
-  font-size: 1.4rem;
-  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  color: var(--card-bg);
+  font-size: 1.05rem;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.15s;
 }
 
-.btn-submit:hover {
+.btn-submit:hover{
   transform: translateY(-3px);
-  box-shadow: 0px 4px 10px rgba(255, 136, 0, 0.3);
-  opacity: 0.9;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  opacity: 0.95;
+}
+
+/* Responsive: pantallas pequeñas */
+@media (max-width: 640px){
+  .survey-title{ font-size: 1.6rem; }
+  .question{ font-size: 1.05rem; text-align: left; }
+  .options{ gap: 10px; justify-content: flex-start; }
+  .option{ padding: 8px 10px; }
+  .survey-form{ padding: 18px; }
 }
