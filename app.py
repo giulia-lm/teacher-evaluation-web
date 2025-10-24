@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, abort
+from flask import flash
 
 import mysql.connector
 import os
@@ -9,7 +10,7 @@ import datetime
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.secret_key = "8so138bs28d32s4wz3872s8ou6oqwo74368o283" 
-
+now = datetime.datetime.now()
 
 # Conexión a la BD
 db = mysql.connector.connect(
@@ -94,7 +95,6 @@ def encuestas_alumnx():
         return redirect(url_for('login'))
 
     user_id = session['user_id']
-    now = datetime.datetime.now()
 
     cursor = db.cursor(dictionary=True)
     #cursor.execute("SELECT f.id, f.title, f.description, f.id_docente, f.id_materia, f.start_at, f.end_at, f.active FROM form f WHERE f.active = 1 AND ((f.id_materia IS NOT NULL AND EXISTS (SELECT 1 FROM alumnx_materia am WHERE am.id_alumnx = %s AND am.id_course = f.id_materia)) OR (f.id_docente IS NOT NULL AND EXISTS (SELECT 1 FROM alumnx_materia am JOIN docente_materia dm ON dm.id_materia = am.id_course WHERE am.id_alumnx = %s AND dm.id_docente = f.id_docente))) ORDER BY f.start_at IS NULL, f.start_at DESC, f.id DESC", (user_id,user_id))
@@ -151,16 +151,45 @@ def contestar_encuesta(id_encuesta):
     return render_template('alumnxs/encuesta.html', error=error, id_encuesta=id_encuesta, form_title=form_title, questions=questions, options=options)
 
 # Función para el botón "enviar respuestas" que registra las respuestas en la bd
-@app.route('/alumnxs/inicio-alumnxs', methods=['GET', 'POST'])
-def enviar_respuestas():
+@app.route('/alumnxs/inicio-alumnxs/<int:id_encuesta>', methods=['GET', 'POST'])
+def enviar_respuestas(id_encuesta):
     error = None
 
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    cursor = db.cursor(dictionary=True)
-    # ("INSERT INTO response (id_form, id_alumnx) VALUES (?, ?)")
-    # ("INSERT INTO answer (response_id, id_question, choice_id, texto_respuesta) VALUES (?, ?, ?, ?)");
-    cursor.close()
+    
+    if request.method == 'POST':
+        cursor = db.cursor(dictionary=True)
+
+        user_id = session['user_id']
+        
+        cursor.execute("INSERT INTO response (id_form,id_alumnx,submitted_at) VALUES (%s, %s, %s)", (id_encuesta, user_id, now))
+        response_id = cursor.lastrowid
+        respuestas = request.form
+
+        for key, value in respuestas.items():
+            choice_id = None
+            if key.startswith('q'):
+                question_id = key.lstrip('q')
+
+                if key.endswith('_comments'):
+                    texto_respuesta = value
+                    question_id = question_id.replace('_comments', '')
+                else:
+                    choice_id = value
+                    cursor.execute("SELECT texto_pregunta FROM question WHERE id=%s",(question_id, ))
+                    texto_respuesta = cursor.fetchall()[0]['texto_pregunta']
+
+                question_id = int(question_id)
+                cursor.execute("INSERT INTO answer (response_id, id_question, choice_id, texto_respuesta) VALUES (%s, %s, %s, %s)",(response_id, question_id, choice_id, texto_respuesta))
+        db.commit()
+        cursor.close()
+
+        flash("Encuesta enviada correctamente")
+        return redirect(url_for('encuestas_alumnx'))
+
+
+
 
 
 if __name__ == '__main__':

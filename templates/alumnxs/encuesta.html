@@ -46,7 +46,7 @@
   <h2 class = "survey-title">{{form_title.title}}</h2>
 <section class="survey-section">
 
-  <form action="{{ url_for('enviar_respuestas') }}" method="post" class="survey-form" aria-labelledby="survey-title">
+  <form action="{{ url_for('enviar_respuestas', id_encuesta=id_encuesta) }}" method="post" class="survey-form" aria-labelledby="survey-title">
     <input type="hidden" name="survey_type" value="materia">
     <hr>
 
@@ -54,7 +54,7 @@
 
     {% for q in questions %}
     <div class="question-card">
-      <label class="question" id="qlabel-{{ q.id }}">{{ q.texto_pregunta }}</label>
+      <label class="question" id="{{ q.id }}">{{ q.texto_pregunta }}</label>
 
       {% if q.tipo == "multiple" %}
       <div class="options" role="radiogroup" aria-labelledby="qlabel-{{ q.id }}">
