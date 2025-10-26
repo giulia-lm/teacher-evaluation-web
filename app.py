@@ -1,12 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for, session, abort
 from flask import flash
-
+import datetime
 import mysql.connector
 import os
 from jinja2 import TemplateNotFound
 import hashlib
 
-import datetime
+import matplotlib.pyplot as plt
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.secret_key = "8so138bs28d32s4wz3872s8ou6oqwo74368o283" 
@@ -201,6 +201,78 @@ def enviar_respuestas(id_encuesta):
         return redirect(url_for('encuestas_alumnx'))
 
 
+# Función para filtrar resultados de evaluacion
+@app.route('/teachers/inicio-teachers', methods=['GET', 'POST'])
+def filter_results():
+    error = None
+    user_id = session['user_id']
+
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    unique_results = []
+    if request.method == 'POST':
+        first_filter = request.form.get('first-filter').strip()
+        cursor = db.cursor(dictionary=True)
+
+        if first_filter == 'Materia':
+            cursor.execute("""SELECT m.name AS materia
+            FROM docente_materia dm
+            JOIN user d ON dm.id_docente = d.id
+            JOIN materia m ON dm.id_materia = m.id
+            JOIN materia_grupo mg ON mg.id_materia = m.id WHERE d.id = %s""", (user_id, ))
+
+        if first_filter == 'Grupo':
+            cursor.execute("""SELECT g.nombre AS grupo
+            FROM docente_materia dm
+            JOIN user d ON dm.id_docente = d.id
+            JOIN materia m ON dm.id_materia = m.id
+            JOIN materia_grupo mg ON mg.id_materia = m.id
+            JOIN grupo g ON mg.id_grupo = g.id WHERE d.id = %s""", (user_id, ))
+            
+        results = cursor.fetchall()
+        unique_results = set(val for dic in results for val in dic.values())
+        cursor.close()
+
+    # GET request
+    return render_template('teachers/inicio-teachers.html', results=unique_results)
+
+
+
+def create_plot(xvalues, yvalues, title, xlabel="", ylabel=""):
+    fig, ax = plt.subplots()
+    ax.plot(xvalues, yvalues)
+    ax.set_title(title)
+    if xlabel:
+        ax.set_xlabel(xlabel)
+    if ylabel:
+        ax.set_ylabel(ylabel)
+    return fig
+
+# Función creación y muestra de gráficos resultados de forms para docente
+@app.route('/teachers/inicio-teachers', methods=['GET'])
+def results_teachers():
+    error = None
+
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+
+    cursor = db.cursor(dictionary=True)
+
+    #cursor.execute("SELECT ", (user_id,user_id))
+    results = cursor.fetchall()
+
+    figures = {}
+    #for result in results:
+        ##figures[result.id] = create_plot(x, y, "test1")
+
+
+    cursor.close()
+
+    # GET request
+    #return render_template('teachers/inicio-teachers', error=error, graficos=graficos)
 
 
 

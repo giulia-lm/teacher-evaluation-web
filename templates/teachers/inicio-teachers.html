@@ -12,6 +12,8 @@
     <link href="../../static/css/components.css" rel="stylesheet">
     <link href="../../static/css/layout.css" rel="stylesheet">
 
+    <link href="../../static/css/pages/teacher-results.css" rel="stylesheet">
+
     <link rel="icon" type="image/jpg" href="../../static/css/img/teacher-icon.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -38,6 +40,18 @@
         </ul>
     </div>
 
+<section class="alert-section">
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class="flashes">
+      {% for message in messages %}
+        <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+</section>
+
 <!-- Sección de inicio / Bienvenida -->
 <section class="welcome-section">
 
@@ -50,7 +64,31 @@
   </div>
 </section>
 
-<section class=""
+<!-- Seccion de resultados obtenidos -->
+<section class="ev-results-section">
+  <div class="ev-results-textBox">
+    <h2>Resultados de Evaluación</h2>
+  </div>  
+
+  <form action="{{ url_for('filter_results') }}" method="post">
+    <label>Filtrar resultados por:</label>
+    <select name="first-filter" class="filtro">
+      <option>Grupo</option>
+      <option>Materia</option>  
+    </select>
+    <input type="submit" value="Submit">
+  </form>
+{% if results %}
+  <form action="{{ url_for('results_teachers') }}" method="post">
+    <select name="second-filter" class="filtro">
+      {% for option in results %} 
+      <option>{{ option }}</option>
+      {% endfor %}
+    </select>
+    <input type="submit" value="Submit">
+  </form>
+{% endif %}
+</section>
 
 
 <!-- Footer -->
