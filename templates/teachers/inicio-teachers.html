@@ -79,7 +79,7 @@
 </form>
 
 <!-- Segundo select oculto al inicio -->
-<form id="second-form" style="display:none;">
+<form action="{{ url_for('results_teachers') }}" method="POST" id="second-form" style="display:none;">
   <select id="second-filter" name="second-filter" class="filtro"></select>
   <input type="submit" value="Ver resultados">
 </form>

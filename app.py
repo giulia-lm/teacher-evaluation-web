@@ -264,18 +264,18 @@ def results_teachers():
 
     cursor = db.cursor(dictionary=True)
 
-    #cursor.execute("SELECT ", (user_id,user_id))
+    cursor.execute("SELECT ", (user_id,user_id))
     results = cursor.fetchall()
 
     figures = {}
-    #for result in results:
-        ##figures[result.id] = create_plot(x, y, "test1")
+    for result in results:
+        figures[result.id] = create_plot(x, y, "test1")
 
 
     cursor.close()
 
     # GET request
-    #return render_template('teachers/inicio-teachers', error=error, graficos=graficos)
+    return render_template('teachers/inicio-teachers', error=error, graficos=graficos)
 
 
 

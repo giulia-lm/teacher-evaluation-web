@@ -1,15 +1,6 @@
 @charset "utf-8";
 
-/* Sección de resultados obtenidos en los formularios para el docente*/
-.ev-results-section {
-  padding-top: 180px;
-  padding-bottom: 100px;
-  background-color: var(--light-bg);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2rem;
-}
+
 
 /* Texto de "Resultados obtenidos" */
 .ev-results-textBox{
@@ -29,4 +20,168 @@
   color: var(--brown);
   font-family: "Nunito", sans-serif;
   font-size: 1.4rem;
+}
+/**/
+
+
+/* Sección principal: centrada pero con título anclado arriba */
+.ev-results-section{
+  width: 100%;
+  padding: 28px 18px 48px;
+  background: var(--ev-bg);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
+/* Card visual que agrupa los formularios (mantiene los forms tal cual) */
+.ev-results-card {
+  width: 100%;
+  max-width: var(--ev-maxw);
+  background: var(--ev-card);
+  border-radius: var(--ev-radius);
+  padding: 16px 18px;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.06);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ev-results-section > form#filter-form,
+.ev-results-section > .ev-results-card > form#filter-form {
+  width: 100%;
+  max-width: var(--ev-maxw);
+  background: transparent;
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Label general */
+.ev-results-section label {
+  font-family: "Nunito", sans-serif;
+  color: var(--ev-brown);
+  font-size: 0.98rem;
+  margin-bottom: 6px;
+  display: inline-block;
+}
+
+/* Selects*/
+.filtro {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 100%;
+  max-width: 420px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1.6px solid rgba(107,79,58,0.14);
+  background-color: #fff;
+  font-family: "Nunito", sans-serif;
+  font-size: 1rem;
+  color: var(--ev-brown);
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.06s ease;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ev-muted) 50%),
+                    linear-gradient(135deg, var(--ev-muted) 50%, transparent 50%),
+                    linear-gradient(to right, rgba(0,0,0,0.02), rgba(0,0,0,0.02));
+  background-position: calc(100% - 18px) calc(1em + 2px), calc(100% - 13px) calc(1em + 2px), 100% 0;
+  background-size: 6px 6px, 6px 6px, 1px 1.2em;
+  background-repeat: no-repeat;
+  padding-right: 44px;
+}
+
+.filtro:focus {
+  outline: none;
+  border-color: var(--ev-orange);
+  box-shadow: 0 6px 20px rgba(255,138,0,0.08);
+  transform: translateY(-1px);
+}
+
+/* Segundo form oculto */
+#second-form {
+  display: none; /* tu HTML ya lo tiene; esto lo refuerza */
+  margin-top: 8px;
+  transition: opacity 0.18s ease;
+  align-items: center;
+}
+
+#second-form.show {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Botón submit dentro del second form */
+#second-form input[type="submit"],
+.ev-results-section button,
+.ev-results-section .btn-see-results {
+  margin-top: 1.2rem; 
+  background-color: var(--orange);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  width: 80%;
+  font-family: "Fugaz One", sans-serif;
+  color: var(--brown);
+  font-size: 1.6rem;
+  transition: transform 0.2s ease, opacity 0.3s ease;
+}
+
+#second-form input[type="submit"]:hover,
+.ev-results-section button:hover,
+.ev-results-section .btn-see-results:hover {
+  transform: translateY(-3px);
+  opacity: 0.95;
+}
+
+/* responsive for mobile */
+.ev-results-section form {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .ev-results-textBox {
+    align-items: flex-start;
+  }
+
+  .ev-results-section form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filtro {
+    max-width: 100%;
+    padding-right: 36px;
+  }
+
+  #second-form.show {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #second-form input[type="submit"] {
+    width: 100%;
+  }
+}
+
+.filtro:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sr-only{
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
 }
