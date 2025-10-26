@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, abort
+from flask import Flask, render_template, request, redirect, url_for, session, abort,jsonify
 from flask import flash
 import datetime
 import mysql.connector
@@ -200,42 +200,45 @@ def enviar_respuestas(id_encuesta):
         flash("Encuesta enviada correctamente")
         return redirect(url_for('encuestas_alumnx'))
 
-
-# Función para filtrar resultados de evaluacion
 @app.route('/teachers/inicio-teachers', methods=['GET', 'POST'])
 def filter_results():
-    error = None
-    user_id = session['user_id']
-
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
-    unique_results = []
+    user_id = session['user_id']
+    cursor = db.cursor(dictionary=True)
+
     if request.method == 'POST':
-        first_filter = request.form.get('first-filter').strip()
-        cursor = db.cursor(dictionary=True)
+        data = request.get_json()  
+        first_filter = data.get('first_filter', '').strip()
 
         if first_filter == 'Materia':
-            cursor.execute("""SELECT m.name AS materia
-            FROM docente_materia dm
-            JOIN user d ON dm.id_docente = d.id
-            JOIN materia m ON dm.id_materia = m.id
-            JOIN materia_grupo mg ON mg.id_materia = m.id WHERE d.id = %s""", (user_id, ))
+            cursor.execute("""
+                SELECT m.name AS materia
+                FROM docente_materia dm
+                JOIN user d ON dm.id_docente = d.id
+                JOIN materia m ON dm.id_materia = m.id
+                JOIN materia_grupo mg ON mg.id_materia = m.id
+                WHERE d.id = %s
+            """, (user_id,))
 
-        if first_filter == 'Grupo':
-            cursor.execute("""SELECT g.nombre AS grupo
-            FROM docente_materia dm
-            JOIN user d ON dm.id_docente = d.id
-            JOIN materia m ON dm.id_materia = m.id
-            JOIN materia_grupo mg ON mg.id_materia = m.id
-            JOIN grupo g ON mg.id_grupo = g.id WHERE d.id = %s""", (user_id, ))
-            
+        elif first_filter == 'Grupo':
+            cursor.execute("""
+                SELECT g.nombre AS grupo
+                FROM docente_materia dm
+                JOIN user d ON dm.id_docente = d.id
+                JOIN materia m ON dm.id_materia = m.id
+                JOIN materia_grupo mg ON mg.id_materia = m.id
+                JOIN grupo g ON mg.id_grupo = g.id
+                WHERE d.id = %s
+            """, (user_id,))
+
         results = cursor.fetchall()
-        unique_results = set(val for dic in results for val in dic.values())
+        unique_results = sorted(set(val for dic in results for val in dic.values()))
         cursor.close()
+        return jsonify({'results': unique_results})
 
-    # GET request
-    return render_template('teachers/inicio-teachers.html', results=unique_results)
+    return render_template('teachers/inicio-teachers.html', results=[])
 
 
 

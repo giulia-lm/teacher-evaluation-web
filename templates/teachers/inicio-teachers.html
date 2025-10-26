@@ -69,27 +69,23 @@
   <div class="ev-results-textBox">
     <h2>Resultados de Evaluación</h2>
   </div>  
+<form id="filter-form">
+  <label>Filtrar resultados por:</label>
+  <select id="first-filter" name="first-filter" class="filtro">
+    <option value="">Selecciona una opción</option>
+    <option value="Grupo">Grupo</option>
+    <option value="Materia">Materia</option>
+  </select>
+</form>
 
-  <form action="{{ url_for('filter_results') }}" method="post">
-    <label>Filtrar resultados por:</label>
-    <select name="first-filter" class="filtro">
-      <option>Grupo</option>
-      <option>Materia</option>  
-    </select>
-    <input type="submit" value="Submit">
-  </form>
-{% if results %}
-  <form action="{{ url_for('results_teachers') }}" method="post">
-    <select name="second-filter" class="filtro">
-      {% for option in results %} 
-      <option>{{ option }}</option>
-      {% endfor %}
-    </select>
-    <input type="submit" value="Submit">
-  </form>
-{% endif %}
+<!-- Segundo select oculto al inicio -->
+<form id="second-form" style="display:none;">
+  <select id="second-filter" name="second-filter" class="filtro"></select>
+  <input type="submit" value="Ver resultados">
+</form>
 </section>
 
+<script type="text/javascript" src="../../static/js/filter-results.js"></script>	
 
 <!-- Footer -->
   <footer class="footer">
