@@ -99,25 +99,37 @@ def encuestas_alumnx():
     cursor = db.cursor(dictionary=True)
     #cursor.execute("SELECT f.id, f.title, f.description, f.id_docente, f.id_materia, f.start_at, f.end_at, f.active FROM form f WHERE f.active = 1 AND ((f.id_materia IS NOT NULL AND EXISTS (SELECT 1 FROM alumnx_materia am WHERE am.id_alumnx = %s AND am.id_course = f.id_materia)) OR (f.id_docente IS NOT NULL AND EXISTS (SELECT 1 FROM alumnx_materia am JOIN docente_materia dm ON dm.id_materia = am.id_course WHERE am.id_alumnx = %s AND dm.id_docente = f.id_docente))) ORDER BY f.start_at IS NULL, f.start_at DESC, f.id DESC", (user_id,user_id))
     cursor.execute("""
-        SELECT f.id, f.title, f.description, f.id_docente, f.id_materia, f.start_at, f.end_at, f.active
-        FROM form f
-        WHERE f.active = 1
-        AND ( (f.start_at IS NULL OR f.start_at <= %s) AND (f.end_at IS NULL OR f.end_at >= %s) )
-        AND (
-      -- forma 1: encuesta vinculada a materia y el alumno está inscrito
-      (f.id_materia IS NOT NULL AND EXISTS (
-          SELECT 1 FROM alumnx_materia am WHERE am.id_alumnx = %s AND am.id_course = f.id_materia
-      ))
-      OR
-      -- forma 2: encuesta vinculada a docente y ese docente imparte alguna materia en la que está el alumno
-      (f.id_docente IS NOT NULL AND EXISTS (
-          SELECT 1 FROM alumnx_materia am
-          JOIN docente_materia dm ON dm.id_materia = am.id_course
-          WHERE am.id_alumnx = %s AND dm.id_docente = f.id_docente
-      ))
-        )
-        ORDER BY f.start_at IS NULL, f.start_at DESC, f.id DESC
-""", (now, now, user_id, user_id))
+            SELECT f.id, f.title, f.description, f.id_docente, f.id_materia, f.start_at, f.end_at, f.active
+            FROM form f
+            WHERE f.active = 1
+            AND ( (f.start_at IS NULL OR f.start_at <= %s)
+                AND (f.end_at IS NULL OR f.end_at >= %s) )
+            AND (
+                -- forma 1: encuesta vinculada a materia y el alumno está inscrito
+                (f.id_materia IS NOT NULL AND EXISTS (
+                SELECT 1 FROM alumnx_materia am
+                WHERE am.id_alumnx = %s
+                AND am.id_course = f.id_materia
+                ))
+                OR
+                -- forma 2: encuesta vinculada a docente y ese docente imparte alguna materia en la que está el alumno
+                (f.id_docente IS NOT NULL AND EXISTS (
+                SELECT 1
+                FROM alumnx_materia am
+                JOIN docente_materia dm ON dm.id_materia = am.id_course
+                WHERE am.id_alumnx = %s
+                AND dm.id_docente = f.id_docente
+                ))
+            )
+            -- solo formularios NO contestados 
+            AND NOT EXISTS (
+                SELECT 1 FROM response r
+                WHERE r.id_form = f.id
+                AND r.id_alumnx = %s
+            )
+            ORDER BY f.start_at IS NULL, f.start_at DESC, f.id DESC
+        """, (now, now, user_id, user_id, user_id))
+
     surveys = cursor.fetchall()
     """print("User ID:", user_id)
     print("Surveys:", surveys)"""

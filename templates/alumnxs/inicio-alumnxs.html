@@ -30,7 +30,6 @@
             Evaluación Docente
             </div>
             <ul class="nav-links">
-                <li><a href="inicio-alumnxs">Inicio</a></li>
                 <li><a href="#">Ayuda</a></li>
             </ul>
         </div>
@@ -39,12 +38,11 @@
     <!-- Mobile Menu -->
     <div class="mobile-menu" id="mobileMenu">
         <ul class="mobile-nav-links">
-            <li><a href="inicio-alumnxs">Inicio</a></li>
             <li><a href="#">Ayuda</a></li>
         </ul>
     </div>
 
-
+<section class="alert-section">
 {% with messages = get_flashed_messages() %}
   {% if messages %}
     <ul class="flashes">
@@ -54,7 +52,7 @@
     </ul>
   {% endif %}
 {% endwith %}
-
+</section>
 
 
 <!-- Sección de inicio / Bienvenida -->
