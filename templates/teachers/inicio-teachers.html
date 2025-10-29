@@ -79,13 +79,23 @@
 </form>
 
 <!-- Segundo select oculto al inicio -->
-<form action="{{ url_for('results_teachers') }}" method="POST" id="second-form" style="display:none;">
+<form action="{{ url_for('results_teachers') }}" method="GET" id="second-form" style="display:none;">
+  <input type="hidden" id="filter-type" name="filter-type"> <!-- nuevo -->
   <select id="second-filter" name="second-filter" class="filtro"></select>
   <input type="submit" value="Ver resultados">
 </form>
+
 </section>
 
 <script type="text/javascript" src="../../static/js/filter-results.js"></script>	
+
+<section class="resultados-filtrados">
+{% for res in resultados_filtrados %}  
+      <h3>{{ res.question }}</h3>
+      <p>{{ res.answer }}</p>
+{% endfor %}
+
+</section>
 
 <!-- Footer -->
   <footer class="footer">
