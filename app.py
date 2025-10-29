@@ -318,6 +318,31 @@ def results_teachers():
 
         return render_template('teachers/inicio-teachers.html', resultados_filtrados=results)
 
+# --- Mostrar todos los formularios relacionados con el docente ---
+@app.route('/teachers/forms-docente', methods=['GET'])
+def show_teacher_forms():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    cursor = db.cursor(dictionary=True)
+
+    # Consulta: formularios creados por el docente o ligados a sus materias
+    cursor.execute("""
+        SELECT DISTINCT f.id, f.title AS form_title, m.name AS materia
+        FROM form f
+        LEFT JOIN materia m ON f.id_materia = m.id
+        LEFT JOIN docente_materia dm ON dm.id_materia = m.id
+        WHERE f.id_docente = %s OR dm.id_docente = %s;
+    """, (user_id, user_id))
+
+    forms = cursor.fetchall()
+    cursor.close()
+
+    print("📋 Formularios encontrados:", forms)
+
+    return render_template('teachers/inicio-teachers.html', forms=forms)
+
 
 
 

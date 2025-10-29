@@ -85,6 +85,23 @@
   <input type="submit" value="Ver resultados">
 </form>
 
+<div class="all-forms">
+  <h2>Formularios Relacionados</h2>
+  {% if forms %}
+    {% for f in forms %}
+      <div class="form-card">
+        <h3>{{ f.form_title }}</h3>
+        {% if f.materia %}
+          <p>Materia: {{ f.materia }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>No hay formularios registrados.</p>
+  {% endif %}
+</div>
+
+
 </section>
 
 <script type="text/javascript" src="../../static/js/filter-results.js"></script>	
