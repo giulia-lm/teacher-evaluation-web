@@ -84,27 +84,20 @@
   <select id="second-filter" name="second-filter" class="filtro"></select>
   <input type="submit" value="Ver resultados">
 </form>
-
+</section>
 <div class="all-forms">
-  <h2>info for graphics</h2>
-  {% if info_for_graphics %}
-    {% for inf in info_for_graphics %}
-      <div class="form-card">
-        <h3>{{ inf.form_title }}</h3>
-        {% if inf.materia %}
-          <p>Materia: {{ inf.materia }}</p>
-        {% endif %}
-        <p>q: {{ inf.question_text }}</p>
-        <p>a: {{ inf.answer_text }}</p>
-      </div>
-    {% endfor %}
-  {% else %}
-    <p>No hay formularios registrados.</p>
-  {% endif %}
+  {% for name, img in figures.items() %}
+  <div class="graph">
+    <div class="graph-title">{{ name }}</div>
+    <img src="{{ img }}" alt="Gráfico {{ name }}" />
+  </div>
+  {% endfor %}
 </div>
 
 
-</section>
+
+
+
 
 <script type="text/javascript" src="../../static/js/filter-results.js"></script>	
 

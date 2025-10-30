@@ -273,12 +273,12 @@ def results_teachers():
     """, (user_id, user_id))
     info_for_graphics = cursor.fetchall()
 
-    figures, group_data = generate_graphics(info_for_graphics)
+    figures_base64, group_data = generate_graphics(info_for_graphics)
 
     # Si no hay filtro aplicado, devolver la plantilla con forms y sin resultados filtrados
     if not filter_type or not selected_id:
         cursor.close()
-        return render_template('teachers/inicio-teachers.html', info_for_graphics=info_for_graphics, resultados_filtrados=[])
+        return render_template('teachers/inicio-teachers.html', figures=figures_base64, resultados_filtrados=[])
 
     # Si sí hay filtro, recuperar respuestas correspondientes
 
@@ -288,12 +288,12 @@ def results_teachers():
         results = "entro a grupo"
     else:
         cursor.close()
-        return render_template('teachers/inicio-teachers.html', info_for_graphics=info_for_graphics, resultados_filtrados=[])
+        return render_template('teachers/inicio-teachers.html', figures=figures_base64, resultados_filtrados=[])
 
     cursor.close()
 
     # Render con forms (siempre) y los resultados filtrados
-    return render_template('teachers/inicio-teachers.html', info_for_graphics=info_for_graphics, resultados_filtrados=results)
+    return render_template('teachers/inicio-teachers.html', figures=figures_base64, resultados_filtrados=results)
 
 
 

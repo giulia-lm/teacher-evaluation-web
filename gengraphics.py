@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from collections import Counter
+import io
+import base64
 
 data = [{'form_id': 3, 'form_title': 'Materia: Ingeniería de Software', 'materia': 'Ingeniería de Software', 'question_id': 13, 'question_text': 'El profesor explica los conceptos claramente.', 'answer_id': 24, 'answer_text': 'Muy de acuerdo'},
         {'form_id': 3, 'form_title': 'Materia: Ingeniería de Software', 'materia': 'Ingeniería de Software', 'question_id': 14, 'question_text': 'El profesor fomenta la participación.', 'answer_id': 25, 'answer_text': 'En desacuerdo'}, 
@@ -61,10 +63,19 @@ def create_plot(xvalues, yvalues, title, xlabel="Respuestas", ylabel="Frecuencia
         ax.set_ylabel(ylabel)
     return fig
 
+def fig_to_base64(fig):
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', bbox_inches='tight')
+    buf.seek(0)
+    img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+    buf.close()
+    return f"data:image/png;base64,{img_base64}"
+
 def generate_graphics(data):
     group_data = group(data)
 
     figures = {}
+    figures_base64 = {}
     for form_id in group_data:
         current_form = group_data[form_id]
         questions_dict = current_form['questions']
@@ -76,9 +87,14 @@ def generate_graphics(data):
             answers_counts = question['freqs']
             img_name = f'f{form_id}_q{quest_id}'
 
-            fig = create_plot(answers_counts.keys(), answers_counts.values(), img_name)
+            fig = create_plot(answers_counts.keys(), answers_counts.values(), question_title)
 
             figures.update({img_name: fig})
             #fig.savefig(img_name)
+    
+    
+    for name, fig in figures.items():
+        figures_base64[name] = fig_to_base64(fig)
+            
 
-            return figures, group_data
+    return figures_base64, group_data
