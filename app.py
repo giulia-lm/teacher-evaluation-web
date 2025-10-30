@@ -5,10 +5,10 @@ import mysql.connector
 import os
 from jinja2 import TemplateNotFound
 import hashlib
-
 import matplotlib.pyplot as plt
-
 import numpy as np
+
+from gengraphics import generate_graphics
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.secret_key = "8so138bs28d32s4wz3872s8ou6oqwo74368o283" 
@@ -202,146 +202,98 @@ def enviar_respuestas(id_encuesta):
         flash("Encuesta enviada correctamente")
         return redirect(url_for('encuestas_alumnx'))
 
-# --- Primer filtro ---
-@app.route('/teachers/inicio-teachers', methods=['POST'])
-def filter_results():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
 
-    user_id = session['user_id']
-    data = request.get_json()
-    first_filter = data.get('first_filter', '').strip()
-
-    cursor = db.cursor(dictionary=True)
-
-    if first_filter == 'Materia':
-        cursor.execute("""
-            SELECT DISTINCT m.id, m.name AS materia
-            FROM docente_materia dm
-            JOIN materia m ON dm.id_materia = m.id
-            WHERE dm.id_docente = %s
-        """, (user_id,))
-    elif first_filter == 'Grupo':
-        cursor.execute("""
-            SELECT DISTINCT g.id, g.nombre AS grupo
-            FROM docente_materia dm
-            JOIN materia m ON dm.id_materia = m.id
-            JOIN materia_grupo mg ON mg.id_materia = m.id
-            JOIN grupo g ON mg.id_grupo = g.id
-            WHERE dm.id_docente = %s
-        """, (user_id,))
-    else:
-        return jsonify({'results': []})
-
-    results = cursor.fetchall()
-    cursor.close()
-    return jsonify({'results': results, 'filter_type': first_filter})
-
-
-
-# Función creación y muestra de gráficos resultados de forms para docente
+# ruta unificada para todo lo que ocurre desde inicio-teachers.html
 @app.route('/teachers/inicio-teachers', methods=['GET', 'POST'])
 def results_teachers():
+    # autenticación básica
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
     user_id = session['user_id']
     cursor = db.cursor(dictionary=True)
 
-    # --- POST: enviar opciones de filtro (Materia o Grupo)
+    # POST para pedir opciones del segundo select (Materia o Grupo)
     if request.method == 'POST':
         data = request.get_json()
         first_filter = data.get('first_filter', '').strip()
+        #app.logger.info("POST /teachers/inicio-teachers first_filter=%s", first_filter)
 
         if first_filter == 'Materia':
             cursor.execute("""
-                SELECT DISTINCT m.id, m.name AS materia
+                SELECT DISTINCT m.id, m.name AS label
                 FROM docente_materia dm
                 JOIN materia m ON dm.id_materia = m.id
                 WHERE dm.id_docente = %s
+                ORDER BY m.name
             """, (user_id,))
+            rows = cursor.fetchall()
+            cursor.close()
+            return jsonify({'results': rows})
+
         elif first_filter == 'Grupo':
             cursor.execute("""
-                SELECT DISTINCT g.id, g.nombre AS grupo
+                SELECT DISTINCT g.id, g.nombre AS label
                 FROM docente_materia dm
                 JOIN materia_grupo mg ON mg.id_materia = dm.id_materia
                 JOIN grupo g ON mg.id_grupo = g.id
                 WHERE dm.id_docente = %s
+                ORDER BY g.nombre
             """, (user_id,))
+            rows = cursor.fetchall()
+            cursor.close()
+            return jsonify({'results': rows})
+
         else:
+            cursor.close()
             return jsonify({'results': []})
-        
-        results = cursor.fetchall()
-        cursor.close()
-        return jsonify({'results': results})
 
-    # --- GET: mostrar resultados filtrados ---
-    if request.method == 'GET':
-        filter_type = request.args.get('filter-type')  # "Materia" o "Grupo"
-        selected_id = request.args.get('second-filter')
+    # GET: o carga inicial de la página o petición con filtrado
+    filter_type = request.args.get('filter-type')  # Materia o Grupo
+    selected_id = request.args.get('second-filter')
 
-        print("Filtro:", filter_type, "Seleccionado:", selected_id)
-
-        if not selected_id or not filter_type:
-            return render_template('teachers/inicio-teachers.html', results=[])
-
-        if filter_type == 'Materia':
-            cursor.execute("""
-                SELECT q.texto_pregunta AS question, 
-                    COALESCE(c.choice_text, a.texto_respuesta) AS answer
-                FROM response r
-                JOIN form f ON r.id_form = f.id
-                JOIN question q ON q.id_form = f.id
-                LEFT JOIN choice c ON c.id = a.choice_id
-                JOIN answer a ON a.response_id = r.id
-                WHERE f.id_materia = %s;
-
-            """, (selected_id,))
-
-        elif filter_type == 'Grupo':
-            cursor.execute("""
-                SELECT q.texto_pregunta AS question, 
-       COALESCE(c.choice_text, a.texto_respuesta) AS answer
-    FROM response r
-    JOIN form f ON r.id_form = f.id
-    JOIN question q ON q.id_form = f.id
-    JOIN answer a ON a.response_id = r.id
-    LEFT JOIN choice c ON c.id = a.choice_id
-    JOIN materia_grupo mg ON mg.id_materia = f.id_materia
-    JOIN grupo g ON g.id = mg.id_grupo
-    WHERE g.id = %s;
-
-            """, (selected_id,))
-
-        results = cursor.fetchall()
-        cursor.close()
-
-        return render_template('teachers/inicio-teachers.html', resultados_filtrados=results)
-
-# --- Mostrar todos los formularios relacionados con el docente ---
-@app.route('/teachers/forms-docente', methods=['GET'])
-def show_teacher_forms():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    user_id = session['user_id']
-    cursor = db.cursor(dictionary=True)
-
-    # Consulta: formularios creados por el docente o ligados a sus materias
+    # Consulta para mostrar todos los formularios del docente (siempre la necesitamos en la vista)
     cursor.execute("""
-        SELECT DISTINCT f.id, f.title AS form_title, m.name AS materia
+        SELECT 
+            f.id AS form_id,
+            f.title AS form_title,
+            m.name AS materia,
+            q.id AS question_id,
+            q.texto_pregunta AS question_text,
+            a.id AS answer_id,
+            COALESCE(c.choice_text, a.texto_respuesta) AS answer_text
         FROM form f
         LEFT JOIN materia m ON f.id_materia = m.id
         LEFT JOIN docente_materia dm ON dm.id_materia = m.id
-        WHERE f.id_docente = %s OR dm.id_docente = %s;
+        JOIN question q ON q.id_form = f.id
+        JOIN answer a ON a.id_question = q.id
+        LEFT JOIN choice c ON c.id = a.choice_id
+        WHERE f.id_docente = %s OR dm.id_docente = %s
+        ORDER BY f.id, q.id;
     """, (user_id, user_id))
+    info_for_graphics = cursor.fetchall()
 
-    forms = cursor.fetchall()
+    figures, group_data = generate_graphics(info_for_graphics)
+
+    # Si no hay filtro aplicado, devolver la plantilla con forms y sin resultados filtrados
+    if not filter_type or not selected_id:
+        cursor.close()
+        return render_template('teachers/inicio-teachers.html', info_for_graphics=info_for_graphics, resultados_filtrados=[])
+
+    # Si sí hay filtro, recuperar respuestas correspondientes
+
+    if filter_type == 'Materia':
+        results = "entro a materias"
+    elif filter_type == 'Grupo':
+        results = "entro a grupo"
+    else:
+        cursor.close()
+        return render_template('teachers/inicio-teachers.html', info_for_graphics=info_for_graphics, resultados_filtrados=[])
+
     cursor.close()
 
-    print("📋 Formularios encontrados:", forms)
-
-    return render_template('teachers/inicio-teachers.html', forms=forms)
+    # Render con forms (siempre) y los resultados filtrados
+    return render_template('teachers/inicio-teachers.html', info_for_graphics=info_for_graphics, resultados_filtrados=results)
 
 
 

@@ -86,14 +86,16 @@
 </form>
 
 <div class="all-forms">
-  <h2>Formularios Relacionados</h2>
-  {% if forms %}
-    {% for f in forms %}
+  <h2>info for graphics</h2>
+  {% if info_for_graphics %}
+    {% for inf in info_for_graphics %}
       <div class="form-card">
-        <h3>{{ f.form_title }}</h3>
-        {% if f.materia %}
-          <p>Materia: {{ f.materia }}</p>
+        <h3>{{ inf.form_title }}</h3>
+        {% if inf.materia %}
+          <p>Materia: {{ inf.materia }}</p>
         {% endif %}
+        <p>q: {{ inf.question_text }}</p>
+        <p>a: {{ inf.answer_text }}</p>
       </div>
     {% endfor %}
   {% else %}
@@ -107,10 +109,7 @@
 <script type="text/javascript" src="../../static/js/filter-results.js"></script>	
 
 <section class="resultados-filtrados">
-{% for res in resultados_filtrados %}  
-      <h3>{{ res.question }}</h3>
-      <p>{{ res.answer }}</p>
-{% endfor %}
+<h3>{{ resultados_filtrados}}</h3>
 
 </section>
 
