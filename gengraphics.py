@@ -1,10 +1,9 @@
 import matplotlib.pyplot as plt
-import numpy as np
 from collections import Counter
 import io
 import base64
 
-data = [{'form_id': 3, 'form_title': 'Materia: Ingeniería de Software', 'materia': 'Ingeniería de Software', 'question_id': 13, 'question_text': 'El profesor explica los conceptos claramente.', 'answer_id': 24, 'answer_text': 'Muy de acuerdo'},
+"""data = [{'form_id': 3, 'form_title': 'Materia: Ingeniería de Software', 'materia': 'Ingeniería de Software', 'question_id': 13, 'question_text': 'El profesor explica los conceptos claramente.', 'answer_id': 24, 'answer_text': 'Muy de acuerdo'},
         {'form_id': 3, 'form_title': 'Materia: Ingeniería de Software', 'materia': 'Ingeniería de Software', 'question_id': 14, 'question_text': 'El profesor fomenta la participación.', 'answer_id': 25, 'answer_text': 'En desacuerdo'}, 
         {'form_id': 3, 'form_title': 'Materia: Ingeniería de Software', 'materia': 'Ingeniería de Software', 'question_id': 15, 'question_text': 'El material y prácticas están relacionados con la materia.', 'answer_id': 26, 'answer_text': 'De acuerdo'}, 
         {'form_id': 3, 'form_title': 'Materia: Ingeniería de Software', 'materia': 'Ingeniería de Software', 'question_id': 16, 'question_text': 'La evaluación refleja lo visto en clase.', 'answer_id': 27, 'answer_text': 'Muy en desacuerdo'}, 
@@ -16,7 +15,7 @@ data = [{'form_id': 3, 'form_title': 'Materia: Ingeniería de Software', 'materi
         {'form_id': 8, 'form_title': 'Docente: Montserrat Mariscal', 'materia': None, 'question_id': 46, 'question_text': 'Los recursos son adecuados.', 'answer_id': 33, 'answer_text': 'En desacuerdo'}, 
         {'form_id': 8, 'form_title': 'Docente: Montserrat Mariscal', 'materia': None, 'question_id': 47, 'question_text': 'El docente muestra interés por el aprendizaje.', 'answer_id': 34, 'answer_text': 'En desacuerdo'}, 
         {'form_id': 8, 'form_title': 'Docente: Montserrat Mariscal', 'materia': None, 'question_id': 48, 'question_text': 'Comentarios adicionales (texto libre).', 'answer_id': 35, 'answer_text': 'test'}]
-
+"""
 def group(data):
     group_data={}
 

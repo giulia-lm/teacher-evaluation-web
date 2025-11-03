@@ -7,6 +7,7 @@ from jinja2 import TemplateNotFound
 import hashlib
 import matplotlib.pyplot as plt
 import numpy as np
+import re
 
 from gengraphics import generate_graphics
 
@@ -202,89 +203,135 @@ def enviar_respuestas(id_encuesta):
         flash("Encuesta enviada correctamente")
         return redirect(url_for('encuestas_alumnx'))
 
-
-# ruta unificada para todo lo que ocurre desde inicio-teachers.html
 @app.route('/teachers/inicio-teachers', methods=['GET', 'POST'])
 def results_teachers():
-    # autenticación básica
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
     user_id = session['user_id']
-    cursor = db.cursor(dictionary=True)
 
-    # POST para pedir opciones del segundo select (Materia o Grupo)
+    # --- POST: devuelve opciones para el segundo select ---
     if request.method == 'POST':
         data = request.get_json()
-        first_filter = data.get('first_filter', '').strip()
-        #app.logger.info("POST /teachers/inicio-teachers first_filter=%s", first_filter)
+        first_filter = data.get('first_filter').strip()
 
-        if first_filter == 'Materia':
-            cursor.execute("""
-                SELECT DISTINCT m.id, m.name AS label
-                FROM docente_materia dm
-                JOIN materia m ON dm.id_materia = m.id
-                WHERE dm.id_docente = %s
-                ORDER BY m.name
-            """, (user_id,))
-        elif first_filter == 'Grupo':
-            cursor.execute("""
-                SELECT DISTINCT g.id, g.nombre AS label
-                FROM docente_materia dm
-                JOIN materia_grupo mg ON mg.id_materia = dm.id_materia
-                JOIN grupo g ON mg.id_grupo = g.id
-                WHERE dm.id_docente = %s
-                ORDER BY g.nombre
-            """, (user_id,))
-        else:
+        try:
+            cursor = db.cursor(dictionary=True)
+            if first_filter == 'Materia':
+                cursor.execute("""
+                    SELECT DISTINCT m.id, m.name AS label
+                    FROM docente_materia dm
+                    JOIN materia m ON dm.id_materia = m.id
+                    WHERE dm.id_docente = %s
+                    ORDER BY m.name
+                """, (user_id,))
+            elif first_filter == 'Grupo':
+                cursor.execute("""
+                    SELECT DISTINCT g.id, g.nombre AS label
+                    FROM docente_materia dm
+                    JOIN materia_grupo mg ON mg.id_materia = dm.id_materia
+                    JOIN grupo g ON mg.id_grupo = g.id
+                    WHERE dm.id_docente = %s
+                    ORDER BY g.nombre
+                """, (user_id,))
+            else:
+                cursor.close()
+                return jsonify({'results': []})
+
+            rows = cursor.fetchall() or []
             cursor.close()
-            return jsonify({'results': []})    
-        
-        rows = cursor.fetchall()
+            return jsonify({'results': rows})
+        except Exception as e:
+            # loguea el error y devuelve respuesta JSON vacía
+            app.logger.exception("Error al obtener opciones para second-select: %s", e)
+            try:
+                cursor.close()
+            except:
+                pass
+            return jsonify({'results': []})
+
+    # --- GET: carga inicial / renderizado de la página con gráficos ---
+    # Consulta general (para mostrar todos los gráficos del docente)
+    try:
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT 
+                f.id AS form_id,
+                f.title AS form_title,
+                m.name AS materia,
+                q.id AS question_id,
+                q.texto_pregunta AS question_text,
+                a.id AS answer_id,
+                COALESCE(c.choice_text, a.texto_respuesta) AS answer_text
+            FROM form f
+            LEFT JOIN materia m ON f.id_materia = m.id
+            LEFT JOIN docente_materia dm ON dm.id_materia = m.id
+            JOIN question q ON q.id_form = f.id
+            JOIN answer a ON a.id_question = q.id
+            LEFT JOIN choice c ON c.id = a.choice_id
+            WHERE f.id_docente = %s OR dm.id_docente = %s
+            ORDER BY f.id, q.id;
+        """, (user_id, user_id))
+        info_for_graphics = cursor.fetchall() or []
         cursor.close()
-        return jsonify({'results': rows})
+    except Exception as e:
+        app.logger.exception("Error cargando info_for_graphics: %s", e)
+        try:
+            cursor.close()
+        except:
+            pass
+        info_for_graphics = []
 
-        
+    # genera las figuras (tu función). Si es lenta, considera generarlas en background/cache.
+    try:
+        figures_base64, _ = generate_graphics(info_for_graphics)
+    except Exception as e:
+        app.logger.exception("Error en generate_graphics: %s", e)
+        figures_base64 = {}
 
-# Consulta para mostrar todos los graficos del docente
-    cursor.execute("""
-        SELECT 
-            f.id AS form_id,
-            f.title AS form_title,
-            m.name AS materia,
-            q.id AS question_id,
-            q.texto_pregunta AS question_text,
-            a.id AS answer_id,
-            COALESCE(c.choice_text, a.texto_respuesta) AS answer_text
-        FROM form f
-        LEFT JOIN materia m ON f.id_materia = m.id
-        LEFT JOIN docente_materia dm ON dm.id_materia = m.id
-        JOIN question q ON q.id_form = f.id
-        JOIN answer a ON a.id_question = q.id
-        LEFT JOIN choice c ON c.id = a.choice_id
-        WHERE f.id_docente = %s OR dm.id_docente = %s
-        ORDER BY f.id, q.id;
-    """, (user_id, user_id))
-
-    info_for_graphics = cursor.fetchall()
-    cursor.close()
-    figures_base64, _ = generate_graphics(info_for_graphics)
-
-    # GET: o carga inicial de la página o petición con filtrado
-    filter_type = request.args.get('filter-type')  # Materia o Grupo
+    # Parámetros para filtrado vía GET (cuando el usuario hace submit en el second-form)
+    filter_type = request.args.get('filter-type')  # "Materia" o "Grupo"
     selected_id = request.args.get('second-filter')
 
-    # Recuperar respuestas correspondientes
-    if filter_type == 'Materia':
-        results = "entro a materias"
-    elif filter_type == 'Grupo':
-        results = "entro a grupo"
-    else:
-        results = []
+    resultados_filtrados = []
+    if filter_type and selected_id:
+        print(selected_id)
+        # consulta para filtrar graficos
+        try:
+            cursor = db.cursor(dictionary=True)
+            for name, fig in figures_base64.items():
+                form_id = int(re.findall(r'f(\d+)', name)[0])
+                if filter_type == 'Materia':
+                    cursor.execute("""
+                        SELECT 1 FROM form f
+                        WHERE f.id = %s AND f.id_materia = %s;
+                        """, (form_id, selected_id))
+                    
+                elif filter_type == 'Grupo':
+                    cursor.execute("""
+                        SELECT 1
+                        FROM form f
+                        JOIN materia_grupo mg ON mg.id_materia = f.id_materia
+                        JOIN grupo g ON g.id = mg.id_grupo
+                        WHERE f.id = %s AND g.id = %s;
+                        """, (form_id, selected_id))
+                existe = cursor.fetchone() is not None
+                cursor.close()
 
-    cursor.close()
-    # Render con forms (siempre) y los resultados filtrados
-    return render_template('teachers/inicio-teachers.html', figures=figures_base64, resultados_filtrados=results)
+                if existe:
+                    resultados_filtrados.append(fig)
+                    
+        except Exception as e:
+            app.logger.exception("Error obteniendo resultados filtrados: %s", e)
+            try:
+                cursor.close()
+            except:
+                pass
+            resultados_filtrados = []
+
+    return render_template('teachers/inicio-teachers.html',
+                           figures=figures_base64,
+                           resultados_filtrados=resultados_filtrados)
 
 
 

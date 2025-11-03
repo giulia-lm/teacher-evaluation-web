@@ -4,7 +4,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const secondForm = document.getElementById('second-form');
   const filterTypeInput = document.getElementById('filter-type');
 
-  // helper: limpia y coloca placeholder
+  // fallback: si la template no inyectó RESULTS_ENDPOINT
+  const endpoint = (typeof RESULTS_ENDPOINT !== 'undefined' && RESULTS_ENDPOINT) ? RESULTS_ENDPOINT : window.location.pathname;
+
   function prepareSecondSelect() {
     secondSelect.innerHTML = '<option value="">Selecciona...</option>';
   }
@@ -14,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   firstFilter.addEventListener('change', async function() {
     const value = this.value;
-    // ocultar si no hay opción seleccionada
     if (!value) {
       secondForm.style.display = 'none';
       prepareSecondSelect();
@@ -22,24 +23,31 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Guardar el tipo de filtro (se envía luego con el GET)
     filterTypeInput.value = value;
+    prepareSecondSelect();
+    secondForm.style.display = 'block';
 
-    // Petición AJAX al backend (usa la misma ruta de la página para evitar hardcode)
     try {
-      const resp = await fetch(window.location.pathname, {
+      const resp = await fetch(endpoint, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ first_filter: value })
       });
 
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      if (!resp.ok) {
+        // mostrar en consola y en el select
+        console.error('Fetch POST falló con status', resp.status);
+        prepareSecondSelect();
+        const errOpt = document.createElement('option');
+        errOpt.value = '';
+        errOpt.textContent = 'Error al cargar opciones';
+        secondSelect.appendChild(errOpt);
+        return;
+      }
 
-      const data = await resp.json();
-      const rows = data.results || [];
+      const data = await resp.json().catch(() => ({ results: [] }));
+      const rows = Array.isArray(data.results) ? data.results : [];
 
-      // poblar segundo select
-      prepareSecondSelect();
       if (rows.length === 0) {
         const opt = document.createElement('option');
         opt.value = '';
@@ -48,25 +56,20 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         rows.forEach(item => {
           const opt = document.createElement('option');
-          // compatibilidad con ambos formatos: {id,label} o {id, materia} / {id, grupo}
           const label = item.label || item.materia || item.grupo || item.name || 'Sin nombre';
           opt.textContent = label;
           opt.value = item.id;
           secondSelect.appendChild(opt);
         });
       }
-
-      secondForm.style.display = 'block';
       secondSelect.focus();
     } catch (err) {
-      console.error('Error cargando opciones:', err);
-      // mostrar mensaje simple en el select
+      console.error('Error cargando opciones (JS):', err);
       prepareSecondSelect();
       const opt = document.createElement('option');
       opt.value = '';
       opt.textContent = 'Error al cargar opciones';
       secondSelect.appendChild(opt);
-      secondForm.style.display = 'block';
     }
   });
 });

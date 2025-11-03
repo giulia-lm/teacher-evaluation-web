@@ -78,6 +78,9 @@
   </select>
 </form>
 
+
+
+
 <!-- Segundo select oculto al inicio -->
 <form action="{{ url_for('results_teachers') }}" method="GET" id="second-form" style="display:none;">
   <input type="hidden" id="filter-type" name="filter-type"> <!-- nuevo -->
@@ -87,26 +90,47 @@
 </section>
 
 <div class="all-forms">
-{% if figures%}
-  {% for name, img in figures.items() %}
-  <div class="graph">
-    <img src="{{ img }}" alt="Gráfico {{ name }}" />
-  </div>
-  {% endfor %}
-{% endif %}
+  {% if figures %}
+    {% for name, img in figures.items() %}
+      <div class="graph">
+        <img src="{{ img }}" alt="Gráfico {{ name }}" style="max-width:400px; border-radius:8px; margin:10px;">
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>No hay gráficos disponibles.</p>
+  {% endif %}
 </div>
 
-
-
-
-
-
-<script type="text/javascript" src="../../static/js/filter-results.js"></script>	
+<div class="filtered-results">
+  {% if figures %}
+    {% for name, img in figures.items() %}
+      <div class="graph">
+        <img src="{{ img }}" alt="Gráfico {{ name }}" style="max-width:400px; border-radius:8px; margin:10px;">
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>No hay gráficos disponibles.</p>
+  {% endif %}
+</div>
 
 <section class="resultados-filtrados">
-<h3>{{ resultados_filtrados}}</h3>
-
+  {% if resultados_filtrados %}
+    {% for img in resultados_filtrados%}
+      <div class="graph">
+        <img src="{{ img }}" alt="Gráfico {{ name }}" style="max-width:400px; border-radius:8px; margin:10px;">
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>No hay gráficos disponibles.</p>
+  {% endif %}
 </section>
+
+<script>
+  // URL canónica para el endpoint unificado en Flask
+  const RESULTS_ENDPOINT = "{{ url_for('results_teachers') }}";
+</script>
+
+<script type="text/javascript" src="../../static/js/filter-results.js"></script>	
 
 <!-- Footer -->
   <footer class="footer">
