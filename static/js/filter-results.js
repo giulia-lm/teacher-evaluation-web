@@ -71,5 +71,16 @@ document.addEventListener('DOMContentLoaded', () => {
       opt.textContent = 'Error al cargar opciones';
       secondSelect.appendChild(opt);
     }
+      // asegurarnos que antes de submit exista el filter-type
+  secondForm.addEventListener('submit', (ev) => {
+    // si no hay tipo, prevenir submit
+    if (!filterTypeInput.value) {
+      ev.preventDefault();
+      alert('Selecciona primero el tipo de filtro (Materia/Grupo).');
+      return false;
+    }
+    // si no hay seleccionado en secondSelect, permitir submit igualmente (el backend devolverá vacío)
+    return true;
   });
 });
+  });

@@ -11,6 +11,13 @@ import re
 
 from gengraphics import generate_graphics
 
+from datetime import datetime
+from PIL import Image
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4, landscape, portrait
+from reportlab.lib.units import mm
+from flask import send_file
+
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.secret_key = "8so138bs28d32s4wz3872s8ou6oqwo74368o283" 
 now = datetime.datetime.now()
@@ -212,8 +219,8 @@ def results_teachers():
 
     # --- POST: devuelve opciones para el segundo select ---
     if request.method == 'POST':
-        data = request.get_json()
-        first_filter = data.get('first_filter').strip()
+        data = request.get_json() or {}
+        first_filter = (data.get('first_filter') or '').strip()
 
         try:
             cursor = db.cursor(dictionary=True)
@@ -242,7 +249,6 @@ def results_teachers():
             cursor.close()
             return jsonify({'results': rows})
         except Exception as e:
-            # loguea el error y devuelve respuesta JSON vacía
             app.logger.exception("Error al obtener opciones para second-select: %s", e)
             try:
                 cursor.close()
@@ -251,11 +257,10 @@ def results_teachers():
             return jsonify({'results': []})
 
     # --- GET: carga inicial / renderizado de la página con gráficos ---
-    # Consulta general (para mostrar todos los gráficos del docente)
     try:
         cursor = db.cursor(dictionary=True)
         cursor.execute("""
-            SELECT 
+            SELECT
                 f.id AS form_id,
                 f.title AS form_title,
                 m.name AS materia,
@@ -282,9 +287,12 @@ def results_teachers():
             pass
         info_for_graphics = []
 
-    # genera las figuras (tu función). Si es lenta, considera generarlas en background/cache.
+    # genera las figuras (tu función). Espera un dict { 'f{form_id}': 'data:image/..;base64,...' }
     try:
         figures_base64, _ = generate_graphics(info_for_graphics)
+        # asegurarse que es dict
+        if not isinstance(figures_base64, dict):
+            figures_base64 = dict(figures_base64)
     except Exception as e:
         app.logger.exception("Error en generate_graphics: %s", e)
         figures_base64 = {}
@@ -293,46 +301,73 @@ def results_teachers():
     filter_type = request.args.get('filter-type')  # "Materia" o "Grupo"
     selected_id = request.args.get('second-filter')
 
-    resultados_filtrados = []
+    filtered_figures = None
+
     if filter_type and selected_id:
-        print(selected_id)
-        # consulta para filtrar graficos
+        # convertimos selected_id a int si es posible
         try:
-            cursor = db.cursor(dictionary=True)
-            for name, fig in figures_base64.items():
-                form_id = int(re.findall(r'f(\d+)', name)[0])
-                if filter_type == 'Materia':
-                    cursor.execute("""
-                        SELECT 1 FROM form f
-                        WHERE f.id = %s AND f.id_materia = %s;
-                        """, (form_id, selected_id))
-                    
-                elif filter_type == 'Grupo':
-                    cursor.execute("""
-                        SELECT 1
-                        FROM form f
-                        JOIN materia_grupo mg ON mg.id_materia = f.id_materia
-                        JOIN grupo g ON g.id = mg.id_grupo
-                        WHERE f.id = %s AND g.id = %s;
-                        """, (form_id, selected_id))
-                existe = cursor.fetchone() is not None
-                cursor.close()
+            selected_id_int = int(selected_id)
+        except Exception:
+            selected_id_int = None
 
-                if existe:
-                    resultados_filtrados.append(fig)
-                    
-        except Exception as e:
-            app.logger.exception("Error obteniendo resultados filtrados: %s", e)
+        if selected_id_int is not None:
             try:
+                cursor = db.cursor(dictionary=True)
+                filtered_figures = {}
+                # prepararemos una sola consulta por tipo y comprobaremos por form_id
+                # recorremos los keys de figures_base64 y verificamos existencia en DB
+                pattern = re.compile(r'f(\d+)')
+                for name, img in figures_base64.items():
+                    m = pattern.search(name)
+                    if not m:
+                        continue
+                    form_id = int(m.group(1))
+
+                    if filter_type == 'Materia':
+                        cursor.execute("""
+                            SELECT 1 FROM form f
+                            WHERE f.id = %s AND f.id_materia = %s
+                            LIMIT 1;
+                        """, (form_id, selected_id_int))
+                    elif filter_type == 'Grupo':
+                        cursor.execute("""
+                            SELECT 1
+                            FROM form f
+                            JOIN materia_grupo mg ON mg.id_materia = f.id_materia
+                            JOIN grupo g ON g.id = mg.id_grupo
+                            WHERE f.id = %s AND g.id = %s
+                            LIMIT 1;
+                        """, (form_id, selected_id_int))
+                    else:
+                        continue
+
+                    existe = cursor.fetchone() is not None
+                    # NO cerramos el cursor dentro del loop; lo cerramos al final
+                    if existe:
+                        filtered_figures[name] = img
+
                 cursor.close()
-            except:
-                pass
-            resultados_filtrados = []
+            except Exception as e:
+                app.logger.exception("Error obteniendo resultados filtrados: %s", e)
+                try:
+                    cursor.close()
+                except:
+                    pass
+                filtered_figures = {}
 
-    return render_template('teachers/inicio-teachers.html',
-                           figures=figures_base64,
-                           resultados_filtrados=resultados_filtrados)
+    # Decidir qué mostrar en la plantilla: si hay filtered_figures (aunque vacío) se muestran solo los filtrados;
+    # si no hay filtro aplicado, se muestran todos los gráficos.
+    if filter_type and selected_id is not None:
+        # si el usuario hizo submit del filtro, mostrar solo los filtrados (puede ser {} -> "no hay gráficos")
+        display_figures = filtered_figures or {}
+    else:
+        display_figures = figures_base64 or {}
 
+    return render_template(
+        'teachers/inicio-teachers.html',
+        figures=figures_base64,               # todos los gráficos (para el select/otras needs)
+        display_figures=display_figures      # LO QUE SE MUESTRA en la UI (por defecto = todos)
+    )
 
 
 

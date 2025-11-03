@@ -64,34 +64,33 @@
   </div>
 </section>
 
-<!-- Seccion de resultados obtenidos -->
+<!-- controles -->
 <section class="ev-results-section">
   <div class="ev-results-textBox">
     <h2>Resultados de Evaluación</h2>
-  </div>  
-<form id="filter-form">
-  <label>Filtrar resultados por:</label>
-  <select id="first-filter" name="first-filter" class="filtro">
-    <option value="">Selecciona una opción</option>
-    <option value="Grupo">Grupo</option>
-    <option value="Materia">Materia</option>
-  </select>
-</form>
+  </div>
 
+  <form id="filter-form">
+    <label>Filtrar resultados por:</label>
+    <select id="first-filter" name="first-filter" class="filtro">
+      <option value="">Selecciona una opción</option>
+      <option value="Grupo">Grupo</option>
+      <option value="Materia">Materia</option>
+    </select>
+  </form>
 
-
-
-<!-- Segundo select oculto al inicio -->
-<form action="{{ url_for('results_teachers') }}" method="GET" id="second-form" style="display:none;">
-  <input type="hidden" id="filter-type" name="filter-type"> <!-- nuevo -->
-  <select id="second-filter" name="second-filter" class="filtro"></select>
-  <input type="submit" value="Ver resultados">
-</form>
+  <!-- Segundo select oculto al inicio -->
+  <form action="{{ url_for('results_teachers') }}" method="GET" id="second-form" style="display:none;">
+    <input type="hidden" id="filter-type" name="filter-type"> <!-- nuevo -->
+    <select id="second-filter" name="second-filter" class="filtro"></select>
+    <input type="submit" value="Ver resultados">
+  </form>
 </section>
 
+<!-- Área de gráficos: usa display_figures para decidir qué mostrar -->
 <div class="all-forms">
-  {% if figures %}
-    {% for name, img in figures.items() %}
+  {% if display_figures %}
+    {% for name, img in display_figures.items() %}
       <div class="graph">
         <img src="{{ img }}" alt="Gráfico {{ name }}" style="max-width:400px; border-radius:8px; margin:10px;">
       </div>
@@ -101,29 +100,6 @@
   {% endif %}
 </div>
 
-<div class="filtered-results">
-  {% if figures %}
-    {% for name, img in figures.items() %}
-      <div class="graph">
-        <img src="{{ img }}" alt="Gráfico {{ name }}" style="max-width:400px; border-radius:8px; margin:10px;">
-      </div>
-    {% endfor %}
-  {% else %}
-    <p>No hay gráficos disponibles.</p>
-  {% endif %}
-</div>
-
-<section class="resultados-filtrados">
-  {% if resultados_filtrados %}
-    {% for img in resultados_filtrados%}
-      <div class="graph">
-        <img src="{{ img }}" alt="Gráfico {{ name }}" style="max-width:400px; border-radius:8px; margin:10px;">
-      </div>
-    {% endfor %}
-  {% else %}
-    <p>No hay gráficos disponibles.</p>
-  {% endif %}
-</section>
 
 <script>
   // URL canónica para el endpoint unificado en Flask
