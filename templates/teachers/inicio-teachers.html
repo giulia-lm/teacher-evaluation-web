@@ -85,13 +85,15 @@
   <input type="submit" value="Ver resultados">
 </form>
 </section>
+
 <div class="all-forms">
+{% if figures%}
   {% for name, img in figures.items() %}
   <div class="graph">
-    <div class="graph-title">{{ name }}</div>
     <img src="{{ img }}" alt="Gráfico {{ name }}" />
   </div>
   {% endfor %}
+{% endif %}
 </div>
 
 

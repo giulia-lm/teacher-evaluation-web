@@ -227,10 +227,6 @@ def results_teachers():
                 WHERE dm.id_docente = %s
                 ORDER BY m.name
             """, (user_id,))
-            rows = cursor.fetchall()
-            cursor.close()
-            return jsonify({'results': rows})
-
         elif first_filter == 'Grupo':
             cursor.execute("""
                 SELECT DISTINCT g.id, g.nombre AS label
@@ -240,19 +236,17 @@ def results_teachers():
                 WHERE dm.id_docente = %s
                 ORDER BY g.nombre
             """, (user_id,))
-            rows = cursor.fetchall()
-            cursor.close()
-            return jsonify({'results': rows})
-
         else:
             cursor.close()
-            return jsonify({'results': []})
+            return jsonify({'results': []})    
+        
+        rows = cursor.fetchall()
+        cursor.close()
+        return jsonify({'results': rows})
 
-    # GET: o carga inicial de la página o petición con filtrado
-    filter_type = request.args.get('filter-type')  # Materia o Grupo
-    selected_id = request.args.get('second-filter')
+        
 
-    # Consulta para mostrar todos los formularios del docente (siempre la necesitamos en la vista)
+# Consulta para mostrar todos los graficos del docente
     cursor.execute("""
         SELECT 
             f.id AS form_id,
@@ -271,27 +265,24 @@ def results_teachers():
         WHERE f.id_docente = %s OR dm.id_docente = %s
         ORDER BY f.id, q.id;
     """, (user_id, user_id))
+
     info_for_graphics = cursor.fetchall()
+    cursor.close()
+    figures_base64, _ = generate_graphics(info_for_graphics)
 
-    figures_base64, group_data = generate_graphics(info_for_graphics)
+    # GET: o carga inicial de la página o petición con filtrado
+    filter_type = request.args.get('filter-type')  # Materia o Grupo
+    selected_id = request.args.get('second-filter')
 
-    # Si no hay filtro aplicado, devolver la plantilla con forms y sin resultados filtrados
-    if not filter_type or not selected_id:
-        cursor.close()
-        return render_template('teachers/inicio-teachers.html', figures=figures_base64, resultados_filtrados=[])
-
-    # Si sí hay filtro, recuperar respuestas correspondientes
-
+    # Recuperar respuestas correspondientes
     if filter_type == 'Materia':
         results = "entro a materias"
     elif filter_type == 'Grupo':
         results = "entro a grupo"
     else:
-        cursor.close()
-        return render_template('teachers/inicio-teachers.html', figures=figures_base64, resultados_filtrados=[])
+        results = []
 
     cursor.close()
-
     # Render con forms (siempre) y los resultados filtrados
     return render_template('teachers/inicio-teachers.html', figures=figures_base64, resultados_filtrados=results)
 

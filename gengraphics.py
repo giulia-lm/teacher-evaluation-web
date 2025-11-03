@@ -96,5 +96,4 @@ def generate_graphics(data):
     for name, fig in figures.items():
         figures_base64[name] = fig_to_base64(fig)
             
-
     return figures_base64, group_data
