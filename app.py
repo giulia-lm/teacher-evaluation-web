@@ -26,6 +26,11 @@ db = mysql.connector.connect(
     database="evaluaciones"
 )
 
+
+def get_cursor(buffered=True, dictionary=True):
+    return db.cursor(buffered=buffered, dictionary=dictionary)
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -66,7 +71,8 @@ def login():
         cursor = None
         try:
             # usar buffered=True evita "Unread result found"
-            cursor = db.cursor(dictionary=True, buffered=True)
+            #cursor = db.cursor(dictionary=True, buffered=True)
+            cursor = get_cursor()
             cursor.execute("SELECT id, name, password, role FROM user WHERE matricula = %s", (uname,))
             user = cursor.fetchone()
         except Exception as e:
@@ -114,7 +120,8 @@ def encuestas_alumnx():
 
     user_id = session['user_id']
 
-    cursor = db.cursor(dictionary=True)
+    #cursor = db.cursor(dictionary=True, buffered=True)
+    cursor = get_cursor()
     #cursor.execute("SELECT f.id, f.title, f.description, f.id_docente, f.id_materia, f.start_at, f.end_at, f.active FROM form f WHERE f.active = 1 AND ((f.id_materia IS NOT NULL AND EXISTS (SELECT 1 FROM alumnx_materia am WHERE am.id_alumnx = %s AND am.id_course = f.id_materia)) OR (f.id_docente IS NOT NULL AND EXISTS (SELECT 1 FROM alumnx_materia am JOIN docente_materia dm ON dm.id_materia = am.id_course WHERE am.id_alumnx = %s AND dm.id_docente = f.id_docente))) ORDER BY f.start_at IS NULL, f.start_at DESC, f.id DESC", (user_id,user_id))
     cursor.execute("""
             SELECT f.id, f.title, f.description, f.id_docente, f.id_materia, f.start_at, f.end_at, f.active
@@ -164,7 +171,8 @@ def contestar_encuesta(id_encuesta):
 
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    cursor = db.cursor(dictionary=True)
+    #cursor = db.cursor(dictionary=True, buffered=True)
+    cursor = get_cursor()
     cursor.execute("SELECT title FROM form WHERE id = %s", (id_encuesta, ))
     form_title = cursor.fetchone()
     cursor.execute("SELECT id, texto_pregunta, tipo FROM question WHERE id_form = %s ORDER BY id ASC", (id_encuesta, ))
@@ -189,7 +197,8 @@ def enviar_respuestas(id_encuesta):
         return redirect(url_for('login'))
     
     if request.method == 'POST':
-        cursor = db.cursor(dictionary=True)
+        #cursor = db.cursor(dictionary=True, buffered=True)
+        cursor = get_cursor()
 
         user_id = session['user_id']
         
@@ -231,7 +240,8 @@ def results_teachers():
         first_filter = (data.get('first_filter') or '').strip()
 
         try:
-            cursor = db.cursor(dictionary=True)
+            #cursor = db.cursor(dictionary=True, buffered=True)
+            cursor = get_cursor()
             if first_filter == 'Materia':
                 cursor.execute("""
                     SELECT DISTINCT m.id, m.name AS label
@@ -266,7 +276,8 @@ def results_teachers():
 
     # GET: carga inicial / renderizado de la página con gráficos 
     try:
-        cursor = db.cursor(dictionary=True)
+        #cursor = db.cursor(dictionary=True, buffered=True)
+        cursor = get_cursor()
         cursor.execute("""
             SELECT
                 f.id AS form_id,
@@ -320,7 +331,8 @@ def results_teachers():
 
         if selected_id_int is not None:
             try:
-                cursor = db.cursor(dictionary=True)
+                #cursor = db.cursor(dictionary=True, buffered=True)
+                cursor = get_cursor()
                 filtered_figures = {}
                 # prepararemos una sola consulta por tipo y comprobaremos por form_id
                 # recorremos los keys de figures_base64 y verificamos existencia en DB
@@ -426,7 +438,8 @@ def admin_users():
     where_sql = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
 
     try:
-        cursor = db.cursor(dictionary=True)
+        #cursor = db.cursor(dictionary=True, buffered=True)
+        cursor = get_cursor()
         # total
         count_sql = f"SELECT COUNT(*) AS total FROM `user` u {where_sql};"
         cursor.execute(count_sql, tuple(params))
@@ -496,7 +509,8 @@ def admin_api_users_all():
     puede recibir JSON sin redirecciones.
     """
     try:
-        cursor = db.cursor(dictionary=True)
+        #cursor = db.cursor(dictionary=True, buffered=True)
+        cursor = get_cursor()
         cursor.execute("SELECT id, name, matricula, role, created_at FROM `user` ORDER BY id DESC;")
         users = cursor.fetchall() or []
         cursor.close()
@@ -522,7 +536,8 @@ def admin_api_materias():
     Ejemplo de respuesta: [ { "id":1, "name":"Matemáticas", "docentes":[...], "grupos":[...] }, ... ]
     """
     try:
-        cursor = db.cursor(dictionary=True)
+        #cursor = db.cursor(dictionary=True, buffered=True)
+        cursor = get_cursor()
         # Traemos materia + posible docente + posible grupo en una consulta
         cursor.execute("""
             SELECT
@@ -620,7 +635,8 @@ def admin_api_respuestas():
 
     try:
         # Usar cursor buffered para evitar errores de "unread result"
-        cursor = db.cursor(dictionary=True, buffered=True)
+        #cursor = db.cursor(dictionary=True, buffered=True)
+        cursor = get_cursor()
 
         sql = f"""
             SELECT
