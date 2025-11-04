@@ -8,28 +8,27 @@
     <title>Evaluación Docente</title>
 
     <!-- link a los styles -->
-    <link href="../assets/css/base.css" rel="stylesheet">
-    <link href="../assets/css/components.css" rel="stylesheet">
-    <link href="../assets/css/layout.css" rel="stylesheet">
+    <link href="../../static/css/base.css" rel="stylesheet">
+    <link href="../../static/css/components.css" rel="stylesheet">
+    <link href="../../static/css/layout.css" rel="stylesheet">
 
-    <link rel="icon" type="image/jpg" href="../assets/css/img/admin-icon.png">
+    <link href="../../static/css/pages/teacher-results.css" rel="stylesheet">
+
+    <link rel="icon" type="image/jpg" href="../../static/css/img/teacher-icon.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Fugaz+One&family=Orbitron:wght@400..900&family=VT323&display=swap" rel="stylesheet">
 </head>
 <body>
-
     <!-- Navigation -->
     <nav id="navbar">
         <div class="nav-container">
-            <div class="logo"><img src="../assets/css/img/admin-icon.png" width="40" height="60">
+            <div class="logo"><img src="../../static/css/img/teacher-icon.png" width="40" height="60">
             Evaluación Docente
             </div>
             <ul class="nav-links">
-                <li><a href="inicio-alumnxs.html">Inicio</a></li>
-                <li><a href="planes.html">Cuestionarios</a></li>
-                <li><a href="contacto.html">Ayuda</a></li>
+                <li><a href="#">Ayuda</a></li>
             </ul>
         </div>
     </nav>
@@ -37,11 +36,21 @@
     <!-- Mobile Menu -->
     <div class="mobile-menu" id="mobileMenu">
         <ul class="mobile-nav-links">
-            <li><a href="inicio-alumnxs.html">Inicio</a></li>
-            <li><a href="planes.html">Cuestionarios</a></li>
-                <li><a href="contacto.html">Ayuda</a></li>
+            <li><a href="#">Ayuda</a></li>
         </ul>
     </div>
+
+<section class="alert-section">
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class="flashes">
+      {% for message in messages %}
+        <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+</section>
 
 <!-- Sección de inicio / Bienvenida -->
 <section class="welcome-section">
@@ -51,9 +60,11 @@
   </div>
 
   <div class="welcome-image">
-    <img src="../assets/css/img/admin-icon.png" class="avatar">
+    <img src="../../static/css/img/teacher-icon.png" class="avatar">
   </div>
 </section>
+
+
 
 <!-- Footer -->
   <footer class="footer">

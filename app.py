@@ -9,18 +9,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import re
 
-from gengraphics import generate_graphics
+from gengraphics import generate_graphics, figs_to_pdf
 
 from datetime import datetime
-from PIL import Image
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4, landscape, portrait
-from reportlab.lib.units import mm
-from flask import send_file
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.secret_key = "8so138bs28d32s4wz3872s8ou6oqwo74368o283" 
-now = datetime.datetime.now()
+now = datetime.now()
 
 # Conexión a la BD
 db = mysql.connector.connect(
@@ -217,7 +212,7 @@ def results_teachers():
 
     user_id = session['user_id']
 
-    # --- POST: devuelve opciones para el segundo select ---
+    # POST: devuelve opciones para el segundo select 
     if request.method == 'POST':
         data = request.get_json() or {}
         first_filter = (data.get('first_filter') or '').strip()
@@ -256,7 +251,7 @@ def results_teachers():
                 pass
             return jsonify({'results': []})
 
-    # --- GET: carga inicial / renderizado de la página con gráficos ---
+    # GET: carga inicial / renderizado de la página con gráficos 
     try:
         cursor = db.cursor(dictionary=True)
         cursor.execute("""
@@ -289,7 +284,7 @@ def results_teachers():
 
     # genera las figuras (tu función). Espera un dict { 'f{form_id}': 'data:image/..;base64,...' }
     try:
-        figures_base64, _ = generate_graphics(info_for_graphics)
+        figures, figures_base64, _ = generate_graphics(info_for_graphics)
         # asegurarse que es dict
         if not isinstance(figures_base64, dict):
             figures_base64 = dict(figures_base64)
@@ -369,6 +364,50 @@ def results_teachers():
         display_figures=display_figures      # LO QUE SE MUESTRA en la UI (por defecto = todos)
     )
 
+@app.route('/teachers/download-report', methods=['GET'])
+def download_teacher_report():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    user_id = session['user_id']
+
+    try:
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT
+                f.id AS form_id,
+                f.title AS form_title,
+                m.name AS materia,
+                q.id AS question_id,
+                q.texto_pregunta AS question_text,
+                a.id AS answer_id,
+                COALESCE(c.choice_text, a.texto_respuesta) AS answer_text
+            FROM form f
+            LEFT JOIN materia m ON f.id_materia = m.id
+            LEFT JOIN docente_materia dm ON dm.id_materia = m.id
+            JOIN question q ON q.id_form = f.id
+            JOIN answer a ON a.id_question = q.id
+            LEFT JOIN choice c ON c.id = a.choice_id
+            WHERE f.id_docente = %s OR dm.id_docente = %s
+            ORDER BY f.id, q.id;
+        """, (user_id, user_id))
+        info_for_graphics = cursor.fetchall() or []
+        cursor.close()
+    except Exception as e:
+        app.logger.exception("Error generando PDF: %s", e)
+        return "Error generando PDF", 500
+
+    # Generar figuras con tu función existente
+    try:
+        figures, _, _ = generate_graphics(info_for_graphics)
+        pdf_path = f"/tmp/teacher_{user_id}_metrics.pdf"
+        figs_to_pdf(figures, pdf_path)
+    except Exception as e:
+        app.logger.exception("Error al crear PDF: %s", e)
+        return "Error creando el PDF", 500
+
+    # Descargar el PDF
+    from flask import send_file
+    return send_file(pdf_path, as_attachment=True, download_name="Reporte_Métricas.pdf")
 
 
 if __name__ == '__main__':

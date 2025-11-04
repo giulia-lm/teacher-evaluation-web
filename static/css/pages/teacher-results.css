@@ -105,7 +105,7 @@
 
 /* Segundo form oculto */
 #second-form {
-  display: none; /* tu HTML ya lo tiene; esto lo refuerza */
+  display: none; 
   margin-top: 8px;
   transition: opacity 0.18s ease;
   align-items: center;
@@ -226,4 +226,45 @@
   height: auto;
   border-radius: 12px;
   object-fit: contain;
+}
+/* Sección del botón */
+.download_res_section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 0;
+  width: 100%;
+  background: transparent;
+}
+
+/* Botón estilizado */
+.download_res_button {
+  display: inline-block;
+  background-color: var(--orange);
+  color: var(--brown);
+  font-family: "Fugaz One", sans-serif;
+  font-size: 1.4rem;
+  text-decoration: none;
+  padding: 0.8rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.25s ease;
+  letter-spacing: 0.5px;
+}
+
+/* Hover / interacción */
+.download_res_button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+  opacity: 0.95;
+}
+
+/* Responsive — más chico en pantallas pequeñas */
+@media (max-width: 600px) {
+  .download_res_button {
+    font-size: 1.2rem;
+    padding: 0.7rem 1.5rem;
+    width: 90%;
+    text-align: center;
+  }
 }
