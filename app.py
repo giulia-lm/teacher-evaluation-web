@@ -1,5 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, session, abort,jsonify
-from flask import flash
+from flask import Flask, render_template, request, redirect, url_for, session, abort, jsonify, flash, current_app
+import math
+from functools import wraps
 import datetime
 import mysql.connector
 import os
@@ -76,7 +77,10 @@ def login():
         session.clear()
         session['user_id'] = user['id']
         session['user_name'] = user['name']
+        # guardar en ambas claves por compatibilidad
         session['user_role'] = user['role']
+        session['role'] = user['role']
+
 
         role = user['role'].strip().lower()
         if role == 'alumnx':
@@ -364,50 +368,322 @@ def results_teachers():
         display_figures=display_figures      # LO QUE SE MUESTRA en la UI (por defecto = todos)
     )
 
-@app.route('/teachers/download-report', methods=['GET'])
-def download_teacher_report():
-    if 'user_id' not in session:
+
+@app.route('/admin/inicio-admin')
+def alias_admin_inicio():
+    return redirect(url_for('admin_users'))  # o render_template directamente
+
+
+
+@app.route('/admin/inicio', methods=['GET'])
+def admin_users():
+    """
+    Endpoint para listar usuarios (paginado, búsqueda, filtro por rol).
+    Devuelve JSON si se pide ?format=json o si Accept: application/json.
+    """
+
+    # --- control de acceso: aceptar ambas claves por compatibilidad ---
+    role_in_session = (session.get('role') or session.get('user_role'))
+    if 'user_id' not in session or (role_in_session or '').strip().lower() != 'admin':
+        current_app.logger.info("Acceso rechazado a /admin/inicio - session keys: %s", dict(session))
         return redirect(url_for('login'))
-    user_id = session['user_id']
+
+    # --- parámetros ---
+    try:
+        page = max(1, int(request.args.get('page', 1)))
+    except Exception:
+        page = 1
+    try:
+        per_page = min(200, max(5, int(request.args.get('per_page', 25))))
+    except Exception:
+        per_page = 25
+
+    role_filter = (request.args.get('role') or '').strip()
+    q = (request.args.get('q') or '').strip()
+    offset = (page - 1) * per_page
+
+    where_clauses = []
+    params = []
+
+    if role_filter:
+        where_clauses.append("u.role = %s")
+        params.append(role_filter)
+
+    if q:
+        where_clauses.append("(u.name LIKE %s OR u.matricula LIKE %s)")
+        likeq = f"%{q}%"
+        params.extend([likeq, likeq])
+
+    where_sql = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
 
     try:
         cursor = db.cursor(dictionary=True)
-        cursor.execute("""
-            SELECT
-                f.id AS form_id,
-                f.title AS form_title,
-                m.name AS materia,
-                q.id AS question_id,
-                q.texto_pregunta AS question_text,
-                a.id AS answer_id,
-                COALESCE(c.choice_text, a.texto_respuesta) AS answer_text
-            FROM form f
-            LEFT JOIN materia m ON f.id_materia = m.id
-            LEFT JOIN docente_materia dm ON dm.id_materia = m.id
-            JOIN question q ON q.id_form = f.id
-            JOIN answer a ON a.id_question = q.id
-            LEFT JOIN choice c ON c.id = a.choice_id
-            WHERE f.id_docente = %s OR dm.id_docente = %s
-            ORDER BY f.id, q.id;
-        """, (user_id, user_id))
-        info_for_graphics = cursor.fetchall() or []
+        # total
+        count_sql = f"SELECT COUNT(*) AS total FROM `user` u {where_sql};"
+        cursor.execute(count_sql, tuple(params))
+        total_row = cursor.fetchone()
+        total = total_row['total'] if total_row else 0
+
+        # datos
+        select_sql = f"""
+            SELECT u.id, u.name, u.matricula, u.role, u.email, u.created_at
+            FROM `user` u
+            {where_sql}
+            ORDER BY u.id DESC
+            LIMIT %s OFFSET %s;
+        """
+        params_with_limit = list(params) + [per_page, offset]
+        cursor.execute(select_sql, tuple(params_with_limit))
+        users = cursor.fetchall() or []
         cursor.close()
     except Exception as e:
-        app.logger.exception("Error generando PDF: %s", e)
-        return "Error generando PDF", 500
+        current_app.logger.exception("Error listando usuarios admin: %s", e)
+        try:
+            cursor.close()
+        except:
+            pass
+        users = []
+        total = 0
 
-    # Generar figuras con tu función existente
+    # --- DETECCIÓN FERREA de petición JSON ---
+    wants_json_via_param = (request.args.get('format') or '').lower() == 'json'
+    accept_header = (request.headers.get('Accept') or '')
+    wants_json_via_accept = 'application/json' in accept_header.lower()
+
+    # Logging temporal para debug (quita cuando ya funcione)
+    current_app.logger.info("admin_users called: args=%s , Accept=%s , session_role=%s , wants_json_param=%s, wants_json_accept=%s",
+                            dict(request.args), accept_header, role_in_session, wants_json_via_param, wants_json_via_accept)
+
+    if wants_json_via_param or wants_json_via_accept:
+        return jsonify({
+            'users': users,
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total': total,
+                'pages': (total + per_page - 1) // per_page
+            }
+        })
+
+    # Sino: render template (vista normal)
+    return render_template(
+        'admin/inicio-admin.html',
+        users=users,
+        page=page,
+        per_page=per_page,
+        total=total,
+        role_filter=role_filter,
+        q=q
+    )
+
+
+
+# --- RUTA DE DIAGNÓSTICO: devuelve TODOS los usuarios en JSON (sin auth) ---
+@app.route('/admin/api/users-all', methods=['GET'])
+def admin_api_users_all():
+    """
+    Ruta simple y robusta que devuelve todos los usuarios como JSON.
+    Úsala para verificar que la consulta a la BD funciona y que el frontend
+    puede recibir JSON sin redirecciones.
+    """
     try:
-        figures, _, _ = generate_graphics(info_for_graphics)
-        pdf_path = f"/tmp/teacher_{user_id}_metrics.pdf"
-        figs_to_pdf(figures, pdf_path)
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("SELECT id, name, matricula, role, created_at FROM `user` ORDER BY id DESC;")
+        users = cursor.fetchall() or []
+        cursor.close()
     except Exception as e:
-        app.logger.exception("Error al crear PDF: %s", e)
-        return "Error creando el PDF", 500
+        # log y devolver error consistente
+        current_app.logger.exception("Error en admin_api_users_all: %s", e)
+        try:
+            cursor.close()
+        except:
+            pass
+        return jsonify({'error': 'DB error', 'details': str(e)}), 500
 
-    # Descargar el PDF
-    from flask import send_file
-    return send_file(pdf_path, as_attachment=True, download_name="Reporte_Métricas.pdf")
+    # devolver directamente el array de usuarios (fácil para el frontend)
+    return jsonify(users)
+
+@app.route('/admin/api/materias', methods=['GET'])
+def admin_api_materias():
+    """
+    Devuelve JSON con todas las materias y, para cada materia:
+      - id, name
+      - docentes: [ {id, name, matricula, email} ]
+      - grupos:   [ {id, nombre} ]
+    Ejemplo de respuesta: [ { "id":1, "name":"Matemáticas", "docentes":[...], "grupos":[...] }, ... ]
+    """
+    try:
+        cursor = db.cursor(dictionary=True)
+        # Traemos materia + posible docente + posible grupo en una consulta
+        cursor.execute("""
+            SELECT
+                m.id AS materia_id,
+                m.name AS materia_name,
+                d.id AS docente_id,
+                d.name AS docente_name,
+                d.matricula AS docente_matricula,
+                g.id AS grupo_id,
+                g.nombre AS grupo_nombre
+            FROM materia m
+            LEFT JOIN docente_materia dm ON dm.id_materia = m.id
+            LEFT JOIN `user` d ON d.id = dm.id_docente
+            LEFT JOIN materia_grupo mg ON mg.id_materia = m.id
+            LEFT JOIN grupo g ON g.id = mg.id_grupo
+            ORDER BY m.id;
+        """)
+        rows = cursor.fetchall() or []
+        cursor.close()
+    except Exception as e:
+        current_app.logger.exception("Error en admin_api_materias: %s", e)
+        try:
+            cursor.close()
+        except:
+            pass
+        return jsonify({'error': 'DB error', 'details': str(e)}), 500
+
+    # Agregamos/normalizamos resultados por materia
+    materias_map = {}
+    for r in rows:
+        mid = r['materia_id']
+        if mid not in materias_map:
+            materias_map[mid] = {
+                'id': mid,
+                'name': r['materia_name'],
+                'docentes': [],
+                'grupos': []
+            }
+
+        # docente (puede ser None si no hay)
+        did = r.get('docente_id')
+        if did:
+            # evitar duplicados: comprobamos por id
+            if not any(d['id'] == did for d in materias_map[mid]['docentes']):
+                materias_map[mid]['docentes'].append({
+                    'id': did,
+                    'name': r.get('docente_name'),
+                    'matricula': r.get('docente_matricula'),
+                    'email': r.get('docente_email')
+                })
+
+        # grupo (puede ser None si no hay)
+        gid = r.get('grupo_id')
+        if gid:
+            if not any(g['id'] == gid for g in materias_map[mid]['grupos']):
+                materias_map[mid]['grupos'].append({
+                    'id': gid,
+                    'nombre': r.get('grupo_nombre')
+                })
+
+    # Convertir a lista ordenada por id
+    materias = [materias_map[k] for k in sorted(materias_map.keys())]
+
+    return jsonify(materias)
+
+
+
+@app.route('/admin/api/respuestas', methods=['GET'])
+def admin_api_respuestas():
+    """
+    Devuelve respuestas agrupadas por response (response + lista de answers).
+    Filtros opcionales: ?form_id=... & ?alumnx_id=...
+    Usa cursor buffered para evitar "Unread result found".
+    """
+    filtros = []
+    params = []
+
+    # parsear/validar filtros
+    form_id = request.args.get('form_id')
+    alumnx_id = request.args.get('alumnx_id')
+
+    try:
+        if form_id:
+            form_id_int = int(form_id)
+            filtros.append("r.id_form = %s")
+            params.append(form_id_int)
+        if alumnx_id:
+            alumnx_id_int = int(alumnx_id)
+            filtros.append("r.id_alumnx = %s")
+            params.append(alumnx_id_int)
+    except ValueError:
+        return jsonify({'error': 'Invalid filter value', 'details': 'form_id and alumnx_id must be integers'}), 400
+
+    where_sql = ("WHERE " + " AND ".join(filtros)) if filtros else ""
+
+    try:
+        # Usar cursor buffered para evitar errores de "unread result"
+        cursor = db.cursor(dictionary=True, buffered=True)
+
+        sql = f"""
+            SELECT
+                r.id AS response_id,
+                r.id_form,
+                r.id_alumnx,
+                r.submitted_at,
+                f.title AS form_title,
+                -- alumno info
+                u.name AS alumnx_name,
+                u.matricula AS alumnx_matricula,
+                -- respuestas individuales
+                a.id AS answer_id,
+                a.id_question,
+                q.texto_pregunta,
+                q.tipo AS pregunta_tipo,
+                a.choice_id,
+                c.choice_text,
+                a.texto_respuesta
+            FROM response r
+            LEFT JOIN `form` f ON f.id = r.id_form
+            LEFT JOIN `user` u ON u.id = r.id_alumnx
+            LEFT JOIN answer a ON a.response_id = r.id
+            LEFT JOIN question q ON q.id = a.id_question
+            LEFT JOIN choice c ON c.id = a.choice_id
+            {where_sql}
+            ORDER BY r.id DESC, a.id ASC;
+        """
+
+        cursor.execute(sql, tuple(params))
+        rows = cursor.fetchall() or []
+        cursor.close()
+    except Exception as e:
+        # Log detallado para debug
+        current_app.logger.exception("Error en admin_api_respuestas (filtered): %s", e)
+        try:
+            cursor.close()
+        except:
+            pass
+        return jsonify({'error': 'DB error', 'details': str(e)}), 500
+
+    # Agrupar por response_id
+    responses_map = {}
+    for r in rows:
+        rid = r['response_id']
+        if rid not in responses_map:
+            responses_map[rid] = {
+                'response_id': rid,
+                'form_id': r.get('id_form'),
+                'form_title': r.get('form_title'),
+                'alumnx_id': r.get('id_alumnx'),
+                'alumnx_name': r.get('alumnx_name'),
+                'alumnx_matricula': r.get('alumnx_matricula'),
+                'submitted_at': r.get('submitted_at'),
+                'answers': []
+            }
+
+        if r.get('answer_id') is not None:
+            responses_map[rid]['answers'].append({
+                'answer_id': r.get('answer_id'),
+                'question_id': r.get('id_question'),
+                'question_text': r.get('texto_pregunta'),
+                'question_type': r.get('pregunta_tipo'),
+                'choice_id': r.get('choice_id'),
+                'choice_text': r.get('choice_text'),
+                'texto_respuesta': r.get('texto_respuesta')
+            })
+
+    responses = list(responses_map.values())
+    return jsonify(responses)
+
+
 
 
 if __name__ == '__main__':

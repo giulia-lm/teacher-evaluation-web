@@ -1,8 +1,30 @@
 @charset "utf-8";
 
-/* Texto de "Resultados obtenidos" */
-.ev-results-textBox{
-  text-align: center;
-  max-width: 700px;
-  margin-bottom: 2rem;
+.admin-dashboard {
+  padding: 2rem;
+}
+
+.filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 0.8rem;
+  border: 1px solid #ccc;
+  text-align: left;
+}
+
+th {
+  background: #f4f4f4;
+}
+
+tr:nth-child(even) {
+  background: #fafafa;
 }

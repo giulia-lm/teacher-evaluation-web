@@ -12,9 +12,9 @@
     <link href="../../static/css/components.css" rel="stylesheet">
     <link href="../../static/css/layout.css" rel="stylesheet">
 
-    <link href="../../static/css/pages/teacher-results.css" rel="stylesheet">
+    <link href="../../static/css/pages/admin-dashboard.css" rel="stylesheet">
 
-    <link rel="icon" type="image/jpg" href="../../static/css/img/teacher-icon.png">
+    <link rel="icon" type="image/jpg" href="../../static/css/img/admin-icon.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +24,7 @@
     <!-- Navigation -->
     <nav id="navbar">
         <div class="nav-container">
-            <div class="logo"><img src="../../static/css/img/teacher-icon.png" width="40" height="60">
+            <div class="logo"><img src="../../static/css/img/admin-icon.png" width="40" height="60">
             Evaluación Docente
             </div>
             <ul class="nav-links">
@@ -60,9 +60,85 @@
   </div>
 
   <div class="welcome-image">
-    <img src="../../static/css/img/teacher-icon.png" class="avatar">
+    <img src="../../static/css/img/admin-icon.png" class="avatar">
   </div>
 </section>
+
+
+
+
+{% block content %}
+
+<section class="admin-dashboard">
+  <h1>Panel de Administración</h1>
+
+  <div class="filters">
+    <input type="text" id="search" placeholder="Buscar por nombre o matrícula">
+    <select id="role-filter">
+      <option value="">Todos los roles</option>
+      <option value="alumnx">Alumnxs</option>
+      <option value="docente">Docentes</option>
+      <option value="admin">Admins</option>
+    </select>
+    <button id="apply-filter">Filtrar</button>
+  </div>
+
+  <table id="users-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Matrícula</th>
+        <th>Rol</th>
+        <th>Fecha creación</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- El JS insertará las filas aquí -->
+    </tbody>
+  </table>
+</section>
+
+<script src="{{ url_for('static', filename='js/dashboard-admin.js') }}"></script>
+
+<table id="materias-table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Materia</th>
+      <th>Docentes</th>
+      <th>Grupos</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script src="{{ url_for('static', filename='js/dashboard-materias.js') }}"></script>
+
+<section class="respuestas-dashboard">
+  <h2>Respuestas de Encuestas</h2>
+<table id="responses-table">
+  <thead>
+    <tr>
+      <th>Resp ID</th>
+      <th>Form ID</th>
+      <th>Form</th>
+      <th>Alumno ID</th>
+      <th>Alumno</th>
+      <th>Fecha</th>
+      <th>Respuestas</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+</section>
+
+<script src="{{ url_for('static', filename='js/dashboard-respuestas.js') }}"></script>
+
+
+{% endblock %}
+
+
 
 
 
