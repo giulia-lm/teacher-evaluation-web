@@ -22,6 +22,7 @@ h1, h2 {
 
 /* ---------- Filtros ---------- */
 .filters {
+    font-family: "Nunito", sans-serif;
   display: flex;
   justify-content: center;
   align-items: center;
