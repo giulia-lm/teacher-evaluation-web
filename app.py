@@ -63,10 +63,21 @@ def login():
         uname = request.form.get('uname', '').strip()
         psw = request.form.get('psw', '')
 
-        cursor = db.cursor(dictionary=True)
-        cursor.execute("SELECT id, name, password, role FROM user WHERE matricula = %s", (uname,))
-        user = cursor.fetchone()
-        cursor.close()
+        cursor = None
+        try:
+            # usar buffered=True evita "Unread result found"
+            cursor = db.cursor(dictionary=True, buffered=True)
+            cursor.execute("SELECT id, name, password, role FROM user WHERE matricula = %s", (uname,))
+            user = cursor.fetchone()
+        except Exception as e:
+            current_app.logger.exception("Error en login - consulta user: %s", e)
+            user = None
+        finally:
+            try:
+                if cursor:
+                    cursor.close()
+            except:
+                pass
 
         # Validar usuario
         if not user or hashlib.md5(psw.encode()).hexdigest() != user['password']:
@@ -77,15 +88,13 @@ def login():
         session.clear()
         session['user_id'] = user['id']
         session['user_name'] = user['name']
-        # guardar en ambas claves por compatibilidad
+        # guardar ambas claves por compatibilidad
         session['user_role'] = user['role']
         session['role'] = user['role']
-
 
         role = user['role'].strip().lower()
         if role == 'alumnx':
             return redirect(url_for('encuestas_alumnx'))
-
         elif role == 'docente':
             return redirect(url_for('teachers_inicio'))
         elif role == 'admin':
