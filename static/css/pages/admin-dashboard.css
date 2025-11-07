@@ -2,7 +2,8 @@
 
 
 .admin-dashboard,
-.respuestas-dashboard {
+.respuestas-dashboard,
+.materias-dashboard {
   background: white;
   box-shadow: var(--shadow-lg);
   border-radius: 20px;
@@ -105,11 +106,7 @@ th {
 }
 
 
-tbody tr:hover {
-  background-color: rgba(251, 190, 71, 0.2);
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
+
 
 /* ---------- Animación ---------- */
 @keyframes fadeIn {
@@ -142,4 +139,191 @@ tbody tr:hover {
   body {
     padding: 1rem;
   }
+}
+
+/* ===== Botón de control principal ===== */
+.admin-controls {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0;
+}
+
+
+.btn-primary {
+  font-family: "Fugaz One", sans-serif;
+  background: var(--orange);
+  color: var(--brown);
+  border: none;
+  padding: 0.7rem 1.2rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(14, 165, 164, 0.25);
+  transition: all 0.25s ease;
+}
+
+.btn-primary:hover {
+  background: var(--yellow);
+  color: var(--brown);
+  box-shadow: 0 6px 16px rgba(14, 165, 164, 0.35);
+  opacity: 0.95;
+  transform: scale(1.05);
+}
+
+
+
+.btn-edit{
+  font-family: "Fugaz One", sans-serif;
+  background: var(--yellow);
+  color: var(--brown);
+  border: none;
+  padding: 0.7rem 0.7rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 300;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(14, 165, 164, 0.25);
+  transition: all 0.25s ease;
+}
+
+.btn-edit:hover{
+  background: var(--yellow);
+  color: var(--orange);
+  box-shadow: 0 6px 16px rgba(14, 165, 164, 0.35);
+  transform: scale(1.05);
+}
+
+.btn-delete{
+  font-family: "Fugaz One", sans-serif;
+  background: var(--orange);
+  color: var(--brown);
+  border: none;
+  padding: 0.7rem 0.7rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 300;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(14, 165, 164, 0.25);
+  transition: all 0.25s ease;
+}
+
+.btn-delete:hover{
+  background: var(--orange);
+  color: var(--yellow);
+  box-shadow: 0 6px 16px rgba(14, 165, 164, 0.35);
+  transform: scale(1.05);
+}
+
+.btn-secondary {
+  font-family: "Fugaz One", sans-serif;
+  background: var(--yellow);
+  color: var(--orange);
+  border: 1px solid var(--yellow);
+  padding: 0.6rem 1.1rem;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: var(--orange);
+  color: var(--yellow);
+  opacity: 0.95;
+}
+
+/* pop up de form */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.45);
+  display: none;         
+  place-items: center;   
+  z-index: 1000;
+  animation: fadeIn 0.25s ease forwards;
+}
+
+.modal.show {
+  display: grid; 
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ===== Contenido del modal ===== */
+.modal-content {
+  background: white;
+  padding: 1.8rem 2rem;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.25);
+  width: min(400px, 90%);
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: popUp 0.25s ease;
+}
+
+@keyframes popUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.modal-content h3 {
+  font-family: "Fugaz One", sans-serif;
+  margin-bottom: 1rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #111827;
+  text-align: center;
+}
+
+/* ===== Formulario ===== */
+#user-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+#user-form label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9rem;
+  color: #374151;
+  font-weight: 500;
+  gap: 0.3rem;
+}
+
+#user-form input,
+#user-form select {
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+#user-form input:focus,
+#user-form select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(14, 165, 164, 0.15);
+}
+
+/* ===== Acciones (botones dentro del form) ===== */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
 }

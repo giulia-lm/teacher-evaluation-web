@@ -66,10 +66,10 @@
 
 
 
-
+  <h1>Panel de Administración</h1>
 {% block content %}
 <section class="admin-dashboard">
-  <h1>Panel de Administración</h1>
+  <h2>Usuarixs registradxs</h2>
   <table id="users-table">
     <thead>
       <tr>
@@ -81,22 +81,66 @@
       </tr>
     </thead>
     <tbody>
-      <!-- El JS insertará las filas aquí -->
+
     </tbody>
+  </table>
+
+
+
+<div class="admin-controls">
+  <button id="btn-open-add" class="btn-primary">Agregar usuario</button>
+</div>
+</section>
+<div id="user-modal" class="modal">
+  <div class="modal-content">
+    <h3 id="modal-title">Agregar usuario</h3>
+    <form id="user-form">
+      <input type="hidden" name="id" id="user-id">
+
+      <label>Nombre
+        <input name="name" id="user-name" required>
+      </label>
+
+      <label>Matrícula
+        <input name="matricula" id="user-matricula" required>
+      </label>
+
+      <label>Rol
+        <select name="role" id="user-role" required>
+          <option value="alumnx">alumnx</option>
+          <option value="docente">docente</option>
+          <option value="admin">admin</option>
+        </select>
+      </label>
+
+      <label>Contraseña
+        <input type="password" id="user-password" name="password" placeholder="Dejar vacío si no cambiar">
+      </label>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" id="user-submit">Guardar</button>
+        <button type="button" class="btn-secondary" id="user-cancel">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<section class="materias-dashboard">
+  <h2>Materias registradas</h2>
+  <table id="materias-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Materia</th>
+        <th>Docentes</th>
+        <th>Grupos</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
   </table>
 </section>
 
-<table id="materias-table">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Materia</th>
-      <th>Docentes</th>
-      <th>Grupos</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
 
 <section class="respuestas-dashboard">
   <h2>Respuestas de Encuestas</h2>
@@ -117,6 +161,7 @@
 </section>
 
 {% endblock %}
+
 
 
 

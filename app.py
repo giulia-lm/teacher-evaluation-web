@@ -842,5 +842,122 @@ def admin_api_respuestas():
     return jsonify(responses)
 
 
+def is_admin_session():
+    role_in_session = (session.get('role') or session.get('user_role') or '').strip().lower()
+    return ('user_id' in session) and (role_in_session == 'admin')
+
+@app.route('/admin/api/user-create', methods=['POST'])
+def admin_api_user_create():
+    if not is_admin_session():
+        return jsonify({'error': 'forbidden'}), 403
+    data = request.get_json() or {}
+    name = (data.get('name') or '').strip()
+    matricula = (data.get('matricula') or '').strip()
+    password = data.get('password') or ''
+    role = (data.get('role') or '').strip()
+    if not name or not matricula or not role:
+        return jsonify({'error': 'missing_fields'}), 400
+    # hash password (mantener compatibilidad con tu DB actual)
+    pw_hash = hashlib.md5(password.encode()).hexdigest() if password else None
+
+    conn = cursor = None
+    try:
+        conn, cursor = get_conn_and_cursor()
+        cursor.execute(
+            "INSERT INTO `user` (name, matricula, password, role, created_at) VALUES (%s, %s, %s, %s, NOW())",
+            (name, matricula, pw_hash, role)
+        )
+        conn.commit()
+        new_id = cursor.lastrowid
+        cursor.execute("SELECT id, name, matricula, role, created_at FROM `user` WHERE id = %s", (new_id,))
+        new_user = cursor.fetchone()
+        return jsonify({'ok': True, 'user': new_user}), 201
+    except Exception as e:
+        current_app.logger.exception("Error creando usuario admin: %s", e)
+        return jsonify({'error': 'db_error', 'details': str(e)}), 500
+    finally:
+        try:
+            if cursor: cursor.close()
+        except: pass
+        try:
+            if conn: conn.close()
+        except: pass
+
+@app.route('/admin/api/user-update', methods=['POST'])
+def admin_api_user_update():
+    if not is_admin_session():
+        return jsonify({'error': 'forbidden'}), 403
+    data = request.get_json() or {}
+    uid = data.get('id')
+    if not uid:
+        return jsonify({'error': 'missing_id'}), 400
+    name = (data.get('name') or '').strip()
+    matricula = (data.get('matricula') or '').strip()
+    password = data.get('password')  # optional: if provided, update hash
+    role = (data.get('role') or '').strip()
+
+    fields = []
+    params = []
+    if name:
+        fields.append("name = %s"); params.append(name)
+    if matricula:
+        fields.append("matricula = %s"); params.append(matricula)
+    if role:
+        fields.append("role = %s"); params.append(role)
+    if password:
+        pw_hash = hashlib.md5(password.encode()).hexdigest()
+        fields.append("password = %s"); params.append(pw_hash)
+
+    if not fields:
+        return jsonify({'error': 'no_fields'}), 400
+
+    params.append(uid)
+    sql = f"UPDATE `user` SET {', '.join(fields)} WHERE id = %s"
+    conn = cursor = None
+    try:
+        conn, cursor = get_conn_and_cursor()
+        cursor.execute(sql, tuple(params))
+        conn.commit()
+        cursor.execute("SELECT id, name, matricula, role, created_at FROM `user` WHERE id = %s", (uid,))
+        user = cursor.fetchone()
+        return jsonify({'ok': True, 'user': user})
+    except Exception as e:
+        current_app.logger.exception("Error actualizando usuario admin: %s", e)
+        return jsonify({'error': 'db_error', 'details': str(e)}), 500
+    finally:
+        try:
+            if cursor: cursor.close()
+        except: pass
+        try:
+            if conn: conn.close()
+        except: pass
+
+@app.route('/admin/api/user-delete', methods=['POST'])
+def admin_api_user_delete():
+    if not is_admin_session():
+        return jsonify({'error': 'forbidden'}), 403
+    data = request.get_json() or {}
+    uid = data.get('id')
+    if not uid:
+        return jsonify({'error': 'missing_id'}), 400
+    conn = cursor = None
+    try:
+        conn, cursor = get_conn_and_cursor()
+        cursor.execute("DELETE FROM `user` WHERE id = %s", (uid,))
+        conn.commit()
+        return jsonify({'ok': True, 'deleted_id': uid})
+    except Exception as e:
+        current_app.logger.exception("Error borrando usuario admin: %s", e)
+        return jsonify({'error': 'db_error', 'details': str(e)}), 500
+    finally:
+        try:
+            if cursor: cursor.close()
+        except: pass
+        try:
+            if conn: conn.close()
+        except: pass
+
+
+
 if __name__ == '__main__':
     app.run(debug=True)
