@@ -104,9 +104,6 @@ th {
   letter-spacing: 0.03em;
 }
 
-tbody tr:nth-child(even) {
-  background-color: #fff8ed;
-}
 
 tbody tr:hover {
   background-color: rgba(251, 190, 71, 0.2);
