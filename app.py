@@ -10,10 +10,11 @@ import hashlib
 import matplotlib.pyplot as plt
 import numpy as np
 import re
-
 from gengraphics import generate_graphics, figs_to_pdf
-
 from datetime import datetime as dt
+
+import mysql.connector
+from mysql.connector import Error
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.secret_key = "8so138bs28d32s4wz3872s8ou6oqwo74368o283"
@@ -32,12 +33,8 @@ def connect_db():
     return mysql.connector.connect(**DB_CONFIG)
 
 db = connect_db()
-
+"""
 def get_cursor(buffered=True, dictionary=True):
-    """
-    Asegurarse que la conexión esté viva; si no, intentar reconectarla.
-    Devuelve un cursor listo para usar.
-    """
     global db
     try:
         # intenta hacer ping y reconectar automáticamente si fue necesario
@@ -51,6 +48,30 @@ def get_cursor(buffered=True, dictionary=True):
             current_app.logger.exception("No se pudo reconectar a la BD: %s", e2)
             raise
     return db.cursor(buffered=buffered, dictionary=dictionary)
+"""
+
+def get_conn_and_cursor(buffered=True, dictionary=True):
+    """
+    Abre una nueva conexión y devuelve (conn, cursor).
+    El caller es responsable de cerrar cursor y conn en finally.
+    Esto evita compartir una sola conexión global entre threads.
+    """
+    conn = None
+    try:
+        conn = mysql.connector.connect(**DB_CONFIG)
+        # opcional: conn.autocommit = True
+        cursor = conn.cursor(buffered=buffered, dictionary=dictionary)
+        return conn, cursor
+    except Exception as e:
+        # si no se pudo conectar, asegurar cierre parcial
+        if conn:
+            try:
+                conn.close()
+            except:
+                pass
+        current_app.logger.exception("No se pudo abrir conexión a BD: %s", e)
+        raise
+
 
 
 @app.route('/')
@@ -84,6 +105,8 @@ def teachers_inicio():
 # Función para logear usuarios
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    conn = None
+    cursor = None
     error = None
     if request.method == 'POST':
         uname = request.form.get('uname', '').strip()
@@ -92,7 +115,7 @@ def login():
         cursor = None
         user = None
         try:
-            cursor = get_cursor()
+            conn, cursor = get_conn_and_cursor()
             cursor.execute("SELECT id, name, password, role FROM `user` WHERE matricula = %s", (uname,))
             user = cursor.fetchone()
         except Exception as e:
@@ -102,6 +125,11 @@ def login():
             try:
                 if cursor:
                     cursor.close()
+            except:
+                pass
+            try:
+                if conn:
+                    conn.close()
             except:
                 pass
 
@@ -133,6 +161,8 @@ def login():
 # Función consulta la base de datos para ver qué encuestas están activas y cuáles ya contestó el alumno
 @app.route('/alumnxs/inicio-alumnxs', methods=['GET'])
 def encuestas_alumnx():
+    conn = None
+    cursor = None
     error = None
 
     if 'user_id' not in session:
@@ -143,7 +173,7 @@ def encuestas_alumnx():
 
     cursor = None
     try:
-        cursor = get_cursor()
+        conn, cursor = get_conn_and_cursor()
         cursor.execute("""
             SELECT f.id, f.title, f.description, f.id_docente, f.id_materia, f.start_at, f.end_at, f.active
             FROM form f
@@ -182,12 +212,19 @@ def encuestas_alumnx():
                 cursor.close()
         except:
             pass
+        try:
+            if conn:
+                conn.close()
+        except:
+            pass
 
     return render_template('alumnxs/inicio-alumnxs.html', error=error, encuestas=surveys)
 
 # Función para el botón "contestar encuesta" que obtiene las preguntas y respuestas de cada encuesta
 @app.route('/alumnxs/inicio-alumnxs/<int:id_encuesta>', methods=['GET'])
 def contestar_encuesta(id_encuesta):
+    conn = None
+    cursor = None
     error = None
 
     if 'user_id' not in session:
@@ -195,7 +232,7 @@ def contestar_encuesta(id_encuesta):
 
     cursor = None
     try:
-        cursor = get_cursor()
+        conn, cursor = get_conn_and_cursor()
         cursor.execute("SELECT title FROM form WHERE id = %s", (id_encuesta, ))
         form_title = cursor.fetchone()
         cursor.execute("SELECT id, texto_pregunta, tipo FROM question WHERE id_form = %s ORDER BY id ASC", (id_encuesta, ))
@@ -217,12 +254,19 @@ def contestar_encuesta(id_encuesta):
                 cursor.close()
         except:
             pass
+        try:
+            if conn:
+                conn.close()
+        except:
+            pass
 
     return render_template('alumnxs/encuesta.html', error=error, id_encuesta=id_encuesta, form_title=form_title, questions=questions, options=options)
 
 # Función para el botón "enviar respuestas" que registra las respuestas en la bd
 @app.route('/alumnxs/inicio-alumnxs/<int:id_encuesta>', methods=['POST'])
 def enviar_respuestas(id_encuesta):
+    conn = None
+    cursor = None
     error = None
 
     if 'user_id' not in session:
@@ -230,7 +274,7 @@ def enviar_respuestas(id_encuesta):
 
     cursor = None
     try:
-        cursor = get_cursor()
+        conn, cursor = get_conn_and_cursor()
         user_id = session['user_id']
         now = dt.now()
         cursor.execute("INSERT INTO response (id_form,id_alumnx,submitted_at) VALUES (%s, %s, %s)", (id_encuesta, user_id, now))
@@ -265,12 +309,19 @@ def enviar_respuestas(id_encuesta):
                 cursor.close()
         except:
             pass
+        try:
+            if conn:
+                conn.close()
+        except:
+            pass
 
     return redirect(url_for('encuestas_alumnx'))
 
 
 @app.route('/teachers/inicio-teachers', methods=['GET', 'POST'])
 def results_teachers():
+    conn = None
+    cursor = None
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
@@ -283,7 +334,7 @@ def results_teachers():
 
         cursor = None
         try:
-            cursor = get_cursor()
+            conn, cursor = get_conn_and_cursor()
             if first_filter == 'Materia':
                 cursor.execute("""
                     SELECT DISTINCT m.id, m.name AS label
@@ -315,11 +366,16 @@ def results_teachers():
                     cursor.close()
             except:
                 pass
+            try:
+                if conn:
+                    conn.close()
+            except:
+                pass
 
     # GET: carga inicial / renderizado de la página con gráficos 
     cursor = None
     try:
-        cursor = get_cursor()
+        conn, cursor = get_conn_and_cursor()
         cursor.execute("""
             SELECT
                 f.id AS form_id,
@@ -348,6 +404,11 @@ def results_teachers():
                 cursor.close()
         except:
             pass
+        try:
+            if conn:
+                conn.close()
+        except:
+            pass
 
     try:
         figures, figures_base64, _ = generate_graphics(info_for_graphics)
@@ -372,7 +433,7 @@ def results_teachers():
         if selected_id_int is not None:
             cursor = None
             try:
-                cursor = get_cursor()
+                conn, cursor = get_conn_and_cursor()
                 filtered_figures = {}
                 pattern = re.compile(r'f(\d+)')
                 for name, img in (figures_base64 or {}).items():
@@ -409,6 +470,11 @@ def results_teachers():
                 try:
                     if cursor:
                         cursor.close()
+                except:
+                    pass
+                try:
+                    if conn:
+                        conn.close()
                 except:
                     pass
 
@@ -479,6 +545,8 @@ def alias_admin_inicio():
 
 @app.route('/admin/inicio', methods=['GET'])
 def admin_users():
+    conn = None
+    cursor = None
     """
     Endpoint para listar usuarios (paginado, búsqueda, filtro por rol).
     Devuelve JSON si se pide ?format=json o si Accept: application/json.
@@ -518,7 +586,7 @@ def admin_users():
 
     cursor = None
     try:
-        cursor = get_cursor()
+        conn, cursor = get_conn_and_cursor()
         count_sql = f"SELECT COUNT(*) AS total FROM `user` u {where_sql};"
         cursor.execute(count_sql, tuple(params))
         total_row = cursor.fetchone()
@@ -542,6 +610,11 @@ def admin_users():
         try:
             if cursor:
                 cursor.close()
+        except:
+            pass
+        try:
+            if conn:
+                conn.close()
         except:
             pass
 
@@ -577,16 +650,15 @@ def admin_users():
 # --- RUTA DE DIAGNÓSTICO: devuelve TODOS los usuarios en JSON (sin auth) ---
 @app.route('/admin/api/users-all', methods=['GET'])
 def admin_api_users_all():
+    conn = None
+    cursor = None
     try:
-        cursor = get_cursor()
+        conn, cursor = get_conn_and_cursor()
         cursor.execute("SELECT id, name, matricula, role, created_at FROM `user` ORDER BY id DESC;")
         users = cursor.fetchall() or []
+        return jsonify(users)
     except Exception as e:
         current_app.logger.exception("Error en admin_api_users_all: %s", e)
-        try:
-            cursor.close()
-        except:
-            pass
         return jsonify({'error': 'DB error', 'details': str(e)}), 500
     finally:
         try:
@@ -594,14 +666,18 @@ def admin_api_users_all():
                 cursor.close()
         except:
             pass
-
-    return jsonify(users)
-
+        try:
+            if conn:
+                conn.close()
+        except:
+            pass
 
 @app.route('/admin/api/materias', methods=['GET'])
 def admin_api_materias():
+    conn = None
+    cursor = None
     try:
-        cursor = get_cursor()
+        conn, cursor = get_conn_and_cursor()
         cursor.execute("""
             SELECT
                 m.id AS materia_id,
@@ -621,10 +697,6 @@ def admin_api_materias():
         rows = cursor.fetchall() or []
     except Exception as e:
         current_app.logger.exception("Error en admin_api_materias: %s", e)
-        try:
-            cursor.close()
-        except:
-            pass
         return jsonify({'error': 'DB error', 'details': str(e)}), 500
     finally:
         try:
@@ -632,7 +704,13 @@ def admin_api_materias():
                 cursor.close()
         except:
             pass
+        try:
+            if conn:
+                conn.close()
+        except:
+            pass
 
+    # procesar rows igual que antes...
     materias_map = {}
     for r in rows:
         mid = r['materia_id']
@@ -658,13 +736,14 @@ def admin_api_materias():
                     'id': gid,
                     'nombre': r.get('grupo_nombre')
                 })
-
     materias = [materias_map[k] for k in sorted(materias_map.keys())]
     return jsonify(materias)
 
 
 @app.route('/admin/api/respuestas', methods=['GET'])
 def admin_api_respuestas():
+    conn = None
+    cursor = None
     filtros = []
     params = []
 
@@ -686,7 +765,7 @@ def admin_api_respuestas():
     where_sql = ("WHERE " + " AND ".join(filtros)) if filtros else ""
 
     try:
-        cursor = get_cursor()
+        conn, cursor = get_conn_and_cursor()
         sql = f"""
             SELECT
                 r.id AS response_id,
@@ -725,6 +804,11 @@ def admin_api_respuestas():
         try:
             if cursor:
                 cursor.close()
+        except:
+            pass
+        try:
+            if conn:
+                conn.close()
         except:
             pass
 

@@ -5,10 +5,12 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const resp = await fetch('/admin/api/users-all', { credentials: 'same-origin' });
       if (!resp.ok) {
-        tableBody.innerHTML = `<tr><td colspan="6">Error: ${resp.status}</td></tr>`;
-        console.error('fetch failed', resp.status, resp.statusText);
+        const txt = await resp.text();
+        console.error('Respuesta /admin/api/respuestas fallo:', resp.status, txt);
+        tbody.innerHTML = `<tr><td colspan="6">Error ${resp.status}</td></tr>`;
         return;
       }
+
       const users = await resp.json();
       console.log('users:', users);
 
@@ -25,7 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${u.name ?? ''}</td>
           <td>${u.matricula ?? ''}</td>
           <td>${u.role ?? ''}</td>
-          <td>${u.email ?? ''}</td>
           <td>${u.created_at ?? ''}</td>
         `;
         tableBody.appendChild(tr);

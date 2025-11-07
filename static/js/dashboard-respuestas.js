@@ -5,9 +5,12 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const resp = await fetch('/admin/api/respuestas?format=json', { credentials: 'same-origin' });
       if (!resp.ok) {
+        const txt = await resp.text();
+        console.error('Respuesta /admin/api/respuestas fallo:', resp.status, txt);
         tbody.innerHTML = `<tr><td colspan="6">Error ${resp.status}</td></tr>`;
         return;
       }
+
 
       const data = await resp.json();
       console.log('Respuestas (backend):', data); // <-- útil para debug

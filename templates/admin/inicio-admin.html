@@ -86,8 +86,6 @@
   </table>
 </section>
 
-<script src="{{ url_for('static', filename='js/dashboard-admin.js') }}"></script>
-
 <table id="materias-table">
   <thead>
     <tr>
@@ -99,8 +97,6 @@
   </thead>
   <tbody></tbody>
 </table>
-
-<script src="{{ url_for('static', filename='js/dashboard-materias.js') }}"></script>
 
 <section class="respuestas-dashboard">
   <h2>Respuestas de Encuestas</h2>
@@ -119,9 +115,6 @@
   <tbody></tbody>
 </table>
 </section>
-
-<script src="{{ url_for('static', filename='js/dashboard-respuestas.js') }}"></script>
-
 
 {% endblock %}
 
@@ -157,5 +150,12 @@
       </div>
      </div>
   </footer>
+
+
+<script src="{{ url_for('static', filename='js/dashboard-admin.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard-materias.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard-respuestas.js') }}"></script>
+
+
 </body>
 </html>

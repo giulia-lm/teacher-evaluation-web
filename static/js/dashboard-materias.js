@@ -5,9 +5,12 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const resp = await fetch('/admin/api/materias', { credentials: 'same-origin' });
       if (!resp.ok) {
-        tbody.innerHTML = `<tr><td colspan="4">Error ${resp.status}</td></tr>`;
+        const txt = await resp.text();
+        console.error('Respuesta /admin/api/respuestas fallo:', resp.status, txt);
+        tbody.innerHTML = `<tr><td colspan="6">Error ${resp.status}</td></tr>`;
         return;
       }
+
       const materias = await resp.json();
       tbody.innerHTML = '';
       if (!materias.length) {
