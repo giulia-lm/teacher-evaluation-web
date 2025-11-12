@@ -1,8 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-
-
-<head>
+<!DOCTYPE html><html lang="en"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Evaluación Docente</title>
@@ -18,8 +14,8 @@
     <link rel="icon" type="image/jpg" href="../../static/css/img/alumnx-icon.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Fugaz+One&family=Orbitron:wght@400..900&family=VT323&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&amp;family=Fugaz+One&amp;family=Orbitron:wght@400..900&amp;family=VT323&amp;display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -43,15 +39,15 @@
     </div>
 
 <section class="alert-section">
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
+
+  
     <ul class="flashes">
-      {% for message in messages %}
-        <li>{{ message }}</li>
-      {% endfor %}
+      
+        <li>Encuesta enviada correctamente</li>
+      
     </ul>
-  {% endif %}
-{% endwith %}
+  
+
 </section>
 
 
@@ -77,15 +73,39 @@
     <p>Selecciona una encuesta para contestar:</p>
   </div>
 
-{% for encuesta in encuestas %}  
+  
   <div class="available-forms-container" name="forms-list">
     <div class="form-card" name="form-item">
-      <h3>{{ encuesta.title }}</h3>
-      <p>{{ encuesta.description }}</p>
-      <button class = "btn-open-form" name="btn-open"> <a href="{{ url_for('contestar_encuesta', id_encuesta=encuesta.id) }}">Contestar</a></button> 
+      <h3>Docente: José Ramírez</h3>
+      <p>Evaluación del/la docente (José Ramírez)</p>
+      <button class="btn-open-form" name="btn-open"> <a href="/alumnxs/inicio-alumnxs/9">Contestar</a></button> 
     </div>
   </div>
-{% endfor %}
+  
+  <div class="available-forms-container" name="forms-list">
+    <div class="form-card" name="form-item">
+      <h3>Docente: Montserrat Mariscal</h3>
+      <p>Evaluación del/la docente (Montserrat Mariscal)</p>
+      <button class="btn-open-form" name="btn-open"> <a href="/alumnxs/inicio-alumnxs/8">Contestar</a></button> 
+    </div>
+  </div>
+  
+  <div class="available-forms-container" name="forms-list">
+    <div class="form-card" name="form-item">
+      <h3>Materia: Arquitectura de Computadoras</h3>
+      <p>Evaluación general de la materia</p>
+      <button class="btn-open-form" name="btn-open"> <a href="/alumnxs/inicio-alumnxs/6">Contestar</a></button> 
+    </div>
+  </div>
+  
+  <div class="available-forms-container" name="forms-list">
+    <div class="form-card" name="form-item">
+      <h3>Materia: Criptografía</h3>
+      <p>Evaluación general de la materia</p>
+      <button class="btn-open-form" name="btn-open"> <a href="/alumnxs/inicio-alumnxs/4">Contestar</a></button> 
+    </div>
+  </div>
+
 
 </section>
 
@@ -118,5 +138,5 @@
      </div>
   </footer>
 
-</body>
-</html>
+
+</body></html>

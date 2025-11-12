@@ -272,35 +272,58 @@ def enviar_respuestas(id_encuesta):
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
-    cursor = None
     try:
         conn, cursor = get_conn_and_cursor()
         user_id = session['user_id']
         now = dt.now()
-        cursor.execute("INSERT INTO response (id_form,id_alumnx,submitted_at) VALUES (%s, %s, %s)", (id_encuesta, user_id, now))
+
+        # Insertar fila de response y obtener response_id
+        cursor.execute(
+            "INSERT INTO response (id_form, id_alumnx, submitted_at) VALUES (%s, %s, %s)",
+            (id_encuesta, user_id, now)
+        )
+        # En mysql.connector, lastrowid viene del cursor
         response_id = cursor.lastrowid
+
         respuestas = request.form
 
         for key, value in respuestas.items():
-            choice_id = None
-            if key.startswith('q'):
-                question_id = key.lstrip('q')
+            # ignorar campos que no sean de pregunta (ej: csrf, submit)
+            if not key.startswith('q'):
+                continue
 
-                if key.endswith('_comments'):
-                    texto_respuesta = value
-                    question_id = question_id.replace('_comments', '')
-                else:
-                    choice_id = value
-                    cursor.execute("SELECT texto_pregunta FROM question WHERE id=%s",(question_id, ))
-                    qres = cursor.fetchone()
-                    texto_respuesta = qres['texto_pregunta'] if qres else None
+            # Determinar si es comentario o choice
+            if key.endswith('_comments'):
+                # key ejemplo: 'q12_comments' -> obtener '12'
+                question_part = key[len('q'):]               # '12_comments'
+                question_id = int(question_part.replace('_comments', ''))
+                texto_respuesta = value
+                choice_id = None
+            else:
+                # key ejemplo: 'q12' -> '12'
+                question_id = int(key[1:])
+                choice_id = int(value) if value else None
+                # obtener texto de la pregunta (opcional)
+                cursor.execute("SELECT texto_pregunta FROM question WHERE id = %s", (question_id,))
+                qres = cursor.fetchone()
+                texto_respuesta = qres['texto_pregunta'] if qres and 'texto_pregunta' in qres else None
 
-                question_id = int(question_id)
-                cursor.execute("INSERT INTO answer (response_id, id_question, choice_id, texto_respuesta) VALUES (%s, %s, %s, %s)",(response_id, question_id, choice_id, texto_respuesta))
-        db.commit()
+            # Insertar la respuesta concreta
+            cursor.execute(
+                "INSERT INTO answer (response_id, id_question, choice_id, texto_respuesta) VALUES (%s, %s, %s, %s)",
+                (response_id, question_id, choice_id, texto_respuesta)
+            )
+
+        # IMPORTANTÍSIMO: commit sobre la conexión que usamos (conn)
+        conn.commit()
         flash("Encuesta enviada correctamente")
     except Exception as e:
-        db.rollback()
+        # Rollback en la conexión usada
+        try:
+            if conn:
+                conn.rollback()
+        except Exception as rollback_err:
+            current_app.logger.exception("Error en rollback: %s", rollback_err)
         current_app.logger.exception("Error enviando respuestas: %s", e)
         flash("Ocurrió un error al enviar la encuesta")
     finally:

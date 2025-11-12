@@ -44,7 +44,7 @@
 
 <!-- FORMULARIO de materias -->
   <h2 class = "survey-title">{{form_title.title}}</h2>
-<section class="survey-section">
+<section class="survey-section" name="form-card">
 
   <form action="{{ url_for('enviar_respuestas', id_encuesta=id_encuesta) }}" method="post" class="survey-form" aria-labelledby="survey-title">
     <input type="hidden" name="survey_type" value="materia">
@@ -54,7 +54,7 @@
 
     {% for q in questions %}
     <div class="question-card">
-      <label class="question" id="{{ q.id }}">{{ q.texto_pregunta }}</label>
+      <label class="question" name="question" id="{{ q.id }}">{{ q.texto_pregunta }}</label>
 
       {% if q.tipo == "multiple" %}
       <div class="options" role="radiogroup" aria-labelledby="qlabel-{{ q.id }}">
@@ -74,7 +74,7 @@
     {% endfor %}
 
     <div class="submit-wrap">
-      <button type="submit" class="btn-submit">Enviar encuesta</button>
+      <button type="submit" class="btn-submit" name="btn-submit">Enviar encuesta</button>
     </div>
   </form>
 </section>
