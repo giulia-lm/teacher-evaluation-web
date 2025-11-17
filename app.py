@@ -1,5 +1,6 @@
 # app.py (versión corregida)
 from flask import Flask, render_template, request, redirect, url_for, session, abort, jsonify, flash, current_app
+from flask import send_file
 import math
 from functools import wraps
 import datetime
@@ -15,6 +16,17 @@ from datetime import datetime as dt
 
 import mysql.connector
 from mysql.connector import Error
+
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from flask import make_response
+from flask import send_file, make_response
+from reportlab.pdfgen import canvas
+from io import BytesIO
+from reportlab.platypus import Paragraph
+from reportlab.lib.styles import ParagraphStyle
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.secret_key = "8so138bs28d32s4wz3872s8ou6oqwo74368o283"
@@ -341,7 +353,7 @@ def enviar_respuestas(id_encuesta):
                 (response_id, question_id, choice_id, texto_respuesta)
             )
 
-        # IMPORTANTÍSIMO: commit sobre la conexión que usamos (conn)
+        
         conn.commit()
         flash("Encuesta enviada correctamente")
     except Exception as e:
@@ -462,7 +474,7 @@ def results_teachers():
             pass
 
     try:
-        figures, figures_base64, _ = generate_graphics(info_for_graphics)
+        _, figures_base64, _ = generate_graphics(info_for_graphics)
         if not isinstance(figures_base64, dict):
             figures_base64 = dict(figures_base64)
     except Exception as e:
@@ -577,15 +589,14 @@ def download_teacher_report():
 
     # Generar figuras con tu función existente
     try:
-        figures, _, _ = generate_graphics(info_for_graphics)
+        figures, _, figs_forms = generate_graphics(info_for_graphics)
         pdf_path = f"/tmp/teacher_{user_id}_metrics.pdf"
-        figs_to_pdf(figures, pdf_path)
+        figs_to_pdf(figs_forms, pdf_path)
     except Exception as e:
         app.logger.exception("Error al crear PDF: %s", e)
         return "Error creando el PDF", 500
 
     # Descargar el PDF
-    from flask import send_file
     return send_file(pdf_path, as_attachment=True, download_name="Reporte_Métricas.pdf")
 
 
@@ -713,7 +724,7 @@ def admin_api_users_all():
         return jsonify(users)
     except Exception as e:
         current_app.logger.exception("Error en admin_api_users_all: %s", e)
-        return jsonify({'error': 'DB error', 'details': str(e)}), 500
+        return jsonify({'error': 'Error al cargar los usuarios.', 'details': str(e)}), 500
     finally:
         try:
             if cursor:
@@ -751,7 +762,7 @@ def admin_api_materias():
         rows = cursor.fetchall() or []
     except Exception as e:
         current_app.logger.exception("Error en admin_api_materias: %s", e)
-        return jsonify({'error': 'DB error', 'details': str(e)}), 500
+        return jsonify({'error': 'Error al cargar las materias', 'details': str(e)}), 500
     finally:
         try:
             if cursor:
@@ -814,7 +825,7 @@ def admin_api_respuestas():
             filtros.append("r.id_alumnx = %s")
             params.append(alumnx_id_int)
     except ValueError:
-        return jsonify({'error': 'Invalid filter value', 'details': 'form_id and alumnx_id must be integers'}), 400
+        return jsonify({'error': 'Valor de filtro inválido.', 'details': 'form_id y alumnx_id deben ser enteros'}), 400
 
     where_sql = ("WHERE " + " AND ".join(filtros)) if filtros else ""
 
@@ -848,12 +859,12 @@ def admin_api_respuestas():
         cursor.execute(sql, tuple(params))
         rows = cursor.fetchall() or []
     except Exception as e:
-        current_app.logger.exception("Error en admin_api_respuestas (filtered): %s", e)
+        current_app.logger.exception("Error en las respuestas (filtradas): %s", e)
         try:
             cursor.close()
         except:
             pass
-        return jsonify({'error': 'DB error', 'details': str(e)}), 500
+        return jsonify({'error': 'Error al cargar las respuestas.', 'details': str(e)}), 500
     finally:
         try:
             if cursor:
@@ -896,6 +907,122 @@ def admin_api_respuestas():
     return jsonify(responses)
 
 
+@app.route('/admin/download-answers', methods=['GET'])
+@require_role("admin")
+def download_admin_report():
+
+    try:
+        conn, cursor = get_conn_and_cursor()
+        cursor.execute("""
+            SELECT
+                r.id AS response_id,
+                r.id_form,
+                r.id_alumnx,
+                r.submitted_at,
+                f.title AS form_title,
+                u.name AS alumnx_name,
+                u.matricula AS alumnx_matricula,
+                a.id AS answer_id,
+                a.id_question,
+                q.texto_pregunta,
+                q.tipo AS pregunta_tipo,
+                a.choice_id,
+                c.choice_text,
+                a.texto_respuesta
+            FROM response r
+            LEFT JOIN `form` f ON f.id = r.id_form
+            LEFT JOIN `user` u ON u.id = r.id_alumnx
+            LEFT JOIN answer a ON a.response_id = r.id
+            LEFT JOIN question q ON q.id = a.id_question
+            LEFT JOIN choice c ON c.id = a.choice_id
+            ORDER BY r.id DESC, a.id ASC;
+        """)
+        info_for_pdf = cursor.fetchall() or []
+
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+    try:
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        elements = []
+
+        styles = getSampleStyleSheet()
+        title = Paragraph("Reporte de Respuestas", styles["Title"])
+        elements.append(title)
+
+
+        styleN = ParagraphStyle(
+            name="normal",
+            fontSize=9,
+            leading=11,   # espacio entre líneas
+        )
+
+
+        data = [[
+            Paragraph("ID Respuesta", styleN),
+            Paragraph("Formulario", styleN),
+            Paragraph("Alumno", styleN),
+            Paragraph("Fecha", styleN),
+            Paragraph("Pregunta", styleN),
+            Paragraph("Respuesta", styleN)
+        ]]
+
+        for row in info_for_pdf:
+            respuesta = row["texto_respuesta"] or row["choice_text"] or ""
+            fecha = row["submitted_at"].strftime("%d/%m/%Y %H:%M") if row["submitted_at"] else ""
+
+
+            data.append([
+                Paragraph(str(row["response_id"]), styleN),
+                Paragraph(f"{row['form_title']} ({row['form_title']})", styleN),
+                Paragraph(f"{row['alumnx_name']} ({row['alumnx_matricula']})", styleN),
+                Paragraph(fecha, styleN),
+                Paragraph(row["texto_pregunta"], styleN),
+                Paragraph(respuesta, styleN),
+            ])
+
+
+        table = Table(data, colWidths=[50, 150, 80, 100, 100, 100])
+
+        # Estilos de tabla bonita
+        table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e0710b")),  # encabezado
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#331901")),
+            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, 0), 10),
+
+            ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
+            ("TOPPADDING", (0, 0), (-1, 0), 8),
+
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#fbbe47")),
+
+            # Filas
+            ("BACKGROUND", (0, 0), (-1, -1), colors.white)
+        ]))
+
+        elements.append(table)
+
+        # Construir PDF
+        doc.build(elements)
+        buffer.seek(0)
+
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name="reporte_respuestas.pdf",
+            mimetype="application/pdf"
+        )
+
+    except Exception as e:
+        print("Error generando PDF:", e)
+        return "Error generando PDF", 500
+
+
+
+
 def is_admin_session():
     role_in_session = (session.get('role') or session.get('user_role') or '').strip().lower()
     return ('user_id' in session) and (role_in_session == 'admin')
@@ -903,20 +1030,28 @@ def is_admin_session():
 @app.route('/admin/api/user-create', methods=['POST'])
 def admin_api_user_create():
     if not is_admin_session():
-        return jsonify({'error': 'forbidden'}), 403
+        return jsonify({'error': 'Prohibido'}), 403
     data = request.get_json() or {}
     name = (data.get('name') or '').strip()
     matricula = (data.get('matricula') or '').strip()
     password = data.get('password') or ''
     role = (data.get('role') or '').strip()
+    
     if not name or not matricula or not role:
-        return jsonify({'error': 'missing_fields'}), 400
-    # hash password (mantener compatibilidad con tu DB actual)
+        return jsonify({'error': 'Falta rellenar campos'}), 400
+    
     pw_hash = hashlib.md5(password.encode()).hexdigest() if password else None
 
     conn = cursor = None
     try:
         conn, cursor = get_conn_and_cursor()
+        cursor.execute(
+            "SELECT 1 FROM user WHERE matricula = %s", (matricula, ))
+        exists = cursor.fetchall()
+
+        if exists:
+            return jsonify({'error': 'Este usuario ya está registrado.'}), 400
+    
         cursor.execute(
             "INSERT INTO `user` (name, matricula, password, role, created_at) VALUES (%s, %s, %s, %s, NOW())",
             (name, matricula, pw_hash, role)
@@ -925,10 +1060,11 @@ def admin_api_user_create():
         new_id = cursor.lastrowid
         cursor.execute("SELECT id, name, matricula, role, created_at FROM `user` WHERE id = %s", (new_id,))
         new_user = cursor.fetchone()
+        flash("Usuario registrado correctamente")
         return jsonify({'ok': True, 'user': new_user}), 201
     except Exception as e:
         current_app.logger.exception("Error creando usuario admin: %s", e)
-        return jsonify({'error': 'db_error', 'details': str(e)}), 500
+        return jsonify({'error': 'Error creando usuario', 'details': str(e)}), 500
     finally:
         try:
             if cursor: cursor.close()
@@ -940,11 +1076,11 @@ def admin_api_user_create():
 @app.route('/admin/api/user-update', methods=['POST'])
 def admin_api_user_update():
     if not is_admin_session():
-        return jsonify({'error': 'forbidden'}), 403
+        return jsonify({'error': 'Prohibido.'}), 403
     data = request.get_json() or {}
     uid = data.get('id')
     if not uid:
-        return jsonify({'error': 'missing_id'}), 400
+        return jsonify({'error': 'Falta id'}), 400
     name = (data.get('name') or '').strip()
     matricula = (data.get('matricula') or '').strip()
     password = data.get('password')  # optional: if provided, update hash
@@ -963,21 +1099,24 @@ def admin_api_user_update():
         fields.append("password = %s"); params.append(pw_hash)
 
     if not fields:
-        return jsonify({'error': 'no_fields'}), 400
+        return jsonify({'error': 'No hay campos.'}), 400
 
     params.append(uid)
     sql = f"UPDATE `user` SET {', '.join(fields)} WHERE id = %s"
     conn = cursor = None
     try:
         conn, cursor = get_conn_and_cursor()
+
+        
         cursor.execute(sql, tuple(params))
         conn.commit()
         cursor.execute("SELECT id, name, matricula, role, created_at FROM `user` WHERE id = %s", (uid,))
         user = cursor.fetchone()
+        flash("Usuario editado correctamente")
         return jsonify({'ok': True, 'user': user})
     except Exception as e:
         current_app.logger.exception("Error actualizando usuario admin: %s", e)
-        return jsonify({'error': 'db_error', 'details': str(e)}), 500
+        return jsonify({'error': 'Error actualizando usuario', 'details': str(e)}), 500
     finally:
         try:
             if cursor: cursor.close()
@@ -989,20 +1128,21 @@ def admin_api_user_update():
 @app.route('/admin/api/user-delete', methods=['POST'])
 def admin_api_user_delete():
     if not is_admin_session():
-        return jsonify({'error': 'forbidden'}), 403
+        return jsonify({'error': 'Prohibido'}), 403
     data = request.get_json() or {}
     uid = data.get('id')
     if not uid:
-        return jsonify({'error': 'missing_id'}), 400
+        return jsonify({'error': 'Falta de id.'}), 400
     conn = cursor = None
     try:
         conn, cursor = get_conn_and_cursor()
         cursor.execute("DELETE FROM `user` WHERE id = %s", (uid,))
         conn.commit()
+        flash("Usuario eliminado correctamente")
         return jsonify({'ok': True, 'deleted_id': uid})
     except Exception as e:
         current_app.logger.exception("Error borrando usuario admin: %s", e)
-        return jsonify({'error': 'db_error', 'details': str(e)}), 500
+        return jsonify({'error': 'Error borrando usuario', 'details': str(e)}), 500
     finally:
         try:
             if cursor: cursor.close()

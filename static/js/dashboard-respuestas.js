@@ -42,6 +42,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('<br>');
 
         const submitted = r.submitted_at ?? r.submittedAt ?? '';
+        let fecha = "";
+        if (submitted) {
+          const date = new Date(submitted);
+          fecha = date.toLocaleString("es-MX", {
+            timeZone: "America/Mexico_City",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+          });
+        }
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -50,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${escapeHtml(String(formTitle))}</td>
           <td>${escapeHtml(String(alumnxId))}</td>
           <td>${escapeHtml(String(alumnxName))} ${alumnxMat ? `(${escapeHtml(alumnxMat)})` : ''}</td>
-          <td>${escapeHtml(String(submitted))}</td>
+          <td>${escapeHtml(String(fecha))}</td>
           <td>${answersHtml}</td>
         `;
         tbody.appendChild(tr);

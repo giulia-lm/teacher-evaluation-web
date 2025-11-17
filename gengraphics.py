@@ -63,8 +63,10 @@ def generate_graphics(data):
 
     figures = {}
     figures_base64 = {}
+    figs_forms = {}
     for form_id in group_data:
         current_form = group_data[form_id]
+        #print("''", current_form)
         questions_dict = current_form['questions']
         
         for quest_id in questions_dict:
@@ -77,15 +79,71 @@ def generate_graphics(data):
             fig = create_plot(answers_counts.keys(), answers_counts.values(), question_title)
 
             figures.update({img_name: fig})
+            figs_forms.update({current_form['form_title']: fig})
             #fig.savefig(img_name)
     
     
     for name, fig in figures.items():
         figures_base64[name] = fig_to_base64(fig)
             
-    return figures, figures_base64, group_data
+    return figures, figures_base64, figs_forms
 
 
+def figs_to_pdf(figures, pdf_title="teacher_metrics.pdf", doc_title="Reporte de Métricas"):
+    """
+    figures: dict { nombre_formulario : figura_matplotlib }
+    """
+    with PdfPages(pdf_title, metadata={'Title': doc_title}) as pdf:
+
+        # -----------------------------
+        # PORTADA DEL DOCUMENTO
+        # -----------------------------
+        fig_portada = plt.figure(figsize=(8.27, 11.69))  # A4 size portrait
+        fig_portada.clf()
+
+        fig_portada.text(
+            0.5, 0.6,
+            doc_title,
+            ha='center', va='center',
+            fontsize=28, weight='bold'
+        )
+
+        fig_portada.text(
+            0.5, 0.45,
+            "Reporte generado automáticamente",
+            ha='center', va='center',
+            fontsize=14
+        )
+
+        pdf.savefig(fig_portada)
+        plt.close(fig_portada)
+
+        # -----------------------------
+        # GRÁFICOS (uno por página)
+        # -----------------------------
+        for form_name, fig in figures.items():
+
+            # Crear una nueva página que incluye título + gráfico
+            fig_page = plt.figure(figsize=(8.27, 11.69))
+            ax_title = fig_page.add_subplot(111)
+            ax_title.axis("off")
+
+            # Encabezado del gráfico
+            ax_title.text(
+                0.5, 0.95,
+                f"Resultados del formulario: {form_name}",
+                ha='center', va='top',
+                fontsize=18, weight='bold'
+            )
+
+            # Insertar el gráfico original dentro de la página
+            # (lo dibujamos como imagen para no destruir la figura original)
+            plt.figure(fig) 
+
+            pdf.savefig(fig_page)
+            plt.close(fig_page)
+
+"""
 def figs_to_pdf(figures, pdf_title="teacher_metrics.pdf",doc_title="Reporte de Métricas"):
     with PdfPages(pdf_title, metadata={'Title': doc_title}) as pdf:   
         for _, fig in figures.items():
@@ -93,7 +151,7 @@ def figs_to_pdf(figures, pdf_title="teacher_metrics.pdf",doc_title="Reporte de M
             pdf.savefig()
             plt.close(fig)
 
-"""data = [{'form_id': 3, 'form_title': 'Materia: Ingeniería de Software', 'materia': 'Ingeniería de Software', 'question_id': 13, 'question_text': 'El profesor explica los conceptos claramente.', 'answer_id': 24, 'answer_text': 'Muy de acuerdo'},
+data = [{'form_id': 3, 'form_title': 'Materia: Ingeniería de Software', 'materia': 'Ingeniería de Software', 'question_id': 13, 'question_text': 'El profesor explica los conceptos claramente.', 'answer_id': 24, 'answer_text': 'Muy de acuerdo'},
         {'form_id': 3, 'form_title': 'Materia: Ingeniería de Software', 'materia': 'Ingeniería de Software', 'question_id': 14, 'question_text': 'El profesor fomenta la participación.', 'answer_id': 25, 'answer_text': 'En desacuerdo'}, 
         {'form_id': 3, 'form_title': 'Materia: Ingeniería de Software', 'materia': 'Ingeniería de Software', 'question_id': 15, 'question_text': 'El material y prácticas están relacionados con la materia.', 'answer_id': 26, 'answer_text': 'De acuerdo'}, 
         {'form_id': 3, 'form_title': 'Materia: Ingeniería de Software', 'materia': 'Ingeniería de Software', 'question_id': 16, 'question_text': 'La evaluación refleja lo visto en clase.', 'answer_id': 27, 'answer_text': 'Muy en desacuerdo'}, 

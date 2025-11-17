@@ -41,17 +41,7 @@
         </ul>
     </div>
 
-<section class="alert-section">
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <ul class="flashes">
-      {% for message in messages %}
-        <li>{{ message }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
-{% endwith %}
-</section>
+<div id="toast-container"></div>
 
 <!-- Sección de inicio / Bienvenida -->
 <section class="welcome-section">
@@ -79,6 +69,7 @@
         <th>Matrícula</th>
         <th>Rol</th>
         <th>Fecha creación</th>
+        <th>Acciones</th>
       </tr>
     </thead>
     <tbody>
@@ -115,7 +106,7 @@
       </label>
 
       <label>Contraseña
-        <input type="password" id="user-password" name="password" placeholder="Dejar vacío si no cambiar">
+        <input type="password" id="user-password" name="password" placeholder="Dejar vacío si no hay cambios">
       </label>
 
       <div class="form-actions">
@@ -162,6 +153,12 @@
 </section>
 
 {% endblock %}
+
+<div class="download_res_section">
+  <a href="{{ url_for('download_admin_report') }}" class="download_res_button">
+    Descargar reporte de respuestas PDF
+  </a>
+</div>
 
 
 

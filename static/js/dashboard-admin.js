@@ -8,6 +8,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnOpenAdd = document.getElementById('btn-open-add');
   const btnCancel = document.getElementById('user-cancel');
 
+  function showToast(msg) {
+    const container = document.getElementById("toast-container");
+    const toast = document.createElement("div");
+    toast.classList.add("toast");
+    toast.textContent = msg;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.remove();
+    }, 5000); 
+  }
+
+
   function showModal(mode='create', user={}) {
     modal.style.display = 'block';
     modalTitle.textContent = mode === 'create' ? 'Agregar usuario' : 'Editar usuario';
@@ -42,6 +55,10 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify(payload)
       });
       const data = await resp.json();
+      if (resp.ok) {
+        showToast("Usuario creado correctamente");
+        loadAllUsers();
+      }
       if (!resp.ok) {
         console.error('Error server:', data);
         alert('Error: ' + (data.error || resp.status));
@@ -67,6 +84,10 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({id})
       });
       const data = await resp.json();
+      if (resp.ok) {
+        showToast("Usuario eliminado correctamente");
+        loadAllUsers();
+      }
       if (!resp.ok) {
         console.error('Error delete:', data);
         alert('No se pudo borrar: ' + (data.error || resp.status));
@@ -94,21 +115,43 @@ document.addEventListener('DOMContentLoaded', () => {
         tableBody.innerHTML = `<tr><td colspan="6">No hay usuarios</td></tr>`;
         return;
       }
+
+      
       users.forEach(u => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${u.id ?? ''}</td>
-          <td>${u.name ?? ''}</td>
-          <td>${u.matricula ?? ''}</td>
-          <td>${u.role ?? ''}</td>
-          <td>${u.created_at ?? ''}</td>
-          <td>
-            <button class="btn-edit" data-id="${u.id}">Editar</button>
-            <button class="btn-delete" data-id="${u.id}">Borrar</button>
-          </td>
-        `;
-        tableBody.appendChild(tr);
+    const tr = document.createElement('tr');
+
+    // --- Convertir la fecha a español ---
+    let fecha = "";
+    if (u.created_at) {
+      const date = new Date(u.created_at);
+      fecha = date.toLocaleString("es-MX", {
+        timeZone: "America/Mexico_City",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
       });
+    }
+    // -------------------------------------
+    const acciones = u.role === 'admin'
+    ? `<button class="btn-edit" data-id="${u.id}">Editar</button>`
+    : `
+        <button class="btn-edit" data-id="${u.id}">Editar</button>
+        <button class="btn-delete" data-id="${u.id}">Borrar</button>
+      `;
+
+
+    tr.innerHTML = `
+      <td>${u.id ?? ''}</td>
+      <td>${u.name ?? ''}</td>
+      <td>${u.matricula ?? ''}</td>
+      <td>${u.role ?? ''}</td>
+      <td>${fecha}</td>
+      <td>${acciones}</td>
+    `;
+    tableBody.appendChild(tr);
+});
 
       // attach handlers
       document.querySelectorAll('.btn-edit').forEach(b => {
