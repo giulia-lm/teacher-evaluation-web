@@ -99,24 +99,24 @@ def alumnxs_inicio():
 def teachers_inicio():
     return render_template('teachers/inicio-teachers.html')
 
-# NOTA: elimine la definición duplicada de /admin/inicio que antes causaba conflicto.
-# La ruta real de admin se declara más abajo como admin_users (y redirige si es necesario).
 
 # Función para logear usuarios
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+
     conn = None
     cursor = None
     error = None
     if request.method == 'POST':
         uname = request.form.get('uname', '').strip()
         psw = request.form.get('psw', '')
+        role = request.form.get("role")
 
         cursor = None
         user = None
         try:
             conn, cursor = get_conn_and_cursor()
-            cursor.execute("SELECT id, name, password, role FROM `user` WHERE matricula = %s", (uname,))
+            cursor.execute("SELECT id, name, password, role FROM `user` WHERE matricula = %s AND role = %s", (uname,role))
             user = cursor.fetchone()
         except Exception as e:
             current_app.logger.exception("Error en login - consulta user: %s", e)
@@ -137,16 +137,23 @@ def login():
         stored_hash = (user.get('password') if user else None)
         if not user or not stored_hash or hashlib.md5(psw.encode()).hexdigest() != stored_hash:
             error = "Usuario o contraseña incorrectos"
-            return render_template('alumnxs/login-alumnxs.html', error=error)
+
+            if role == 'alumnx':
+                return render_template('alumnxs/login-alumnxs.html', error=error)
+            elif role == 'docente':
+                return render_template('teachers/login-teachers.html', error=error)
+            elif role == 'admin':
+                return render_template('admin/login-admin.html', error=error)
 
         # Login OK
         session.clear()
+        session["logged_in"] = True
         session['user_id'] = user['id']
         session['user_name'] = user['name']
         session['user_role'] = user['role']
         session['role'] = user['role']
 
-        role = (user['role'] or '').strip().lower()
+        
         if role == 'alumnx':
             return redirect(url_for('encuestas_alumnx'))
         elif role == 'docente':
@@ -155,11 +162,29 @@ def login():
             return redirect(url_for('admin_users'))
 
     # GET request
-    return render_template('alumnxs/login-alumnxs.html', error=error)
+    return render_template('index.html', error=error)
+
+def require_role(role):
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            if not session.get("logged_in"):
+                return redirect(url_for("login"))
+            if session.get("role") != role:
+                return "Acceso denegado", 403
+            return f(*args, **kwargs)
+        return wrapper
+    return decorator
+
+@app.route('/logout')
+def logout():
+    session.clear() 
+    return redirect(url_for('index')) 
 
 
 # Función consulta la base de datos para ver qué encuestas están activas y cuáles ya contestó el alumno
 @app.route('/alumnxs/inicio-alumnxs', methods=['GET'])
+@require_role("alumnx")
 def encuestas_alumnx():
     conn = None
     cursor = None
@@ -222,6 +247,7 @@ def encuestas_alumnx():
 
 # Función para el botón "contestar encuesta" que obtiene las preguntas y respuestas de cada encuesta
 @app.route('/alumnxs/inicio-alumnxs/<int:id_encuesta>', methods=['GET'])
+@require_role("alumnx")
 def contestar_encuesta(id_encuesta):
     conn = None
     cursor = None
@@ -264,6 +290,7 @@ def contestar_encuesta(id_encuesta):
 
 # Función para el botón "enviar respuestas" que registra las respuestas en la bd
 @app.route('/alumnxs/inicio-alumnxs/<int:id_encuesta>', methods=['POST'])
+@require_role("alumnx")
 def enviar_respuestas(id_encuesta):
     conn = None
     cursor = None
@@ -342,6 +369,7 @@ def enviar_respuestas(id_encuesta):
 
 
 @app.route('/teachers/inicio-teachers', methods=['GET', 'POST'])
+@require_role("docente")
 def results_teachers():
     conn = None
     cursor = None
@@ -515,6 +543,7 @@ def results_teachers():
 
 
 @app.route('/teachers/download-report', methods=['GET'])
+@require_role("docente")
 def download_teacher_report():
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -562,11 +591,13 @@ def download_teacher_report():
 
 # alias que redirige a la vista admin (ahora admin_users es la única definicion para /admin/inicio)
 @app.route('/admin/inicio-admin')
+@require_role("admin")
 def alias_admin_inicio():
     return redirect(url_for('admin_users'))
 
 
 @app.route('/admin/inicio', methods=['GET'])
+@require_role("admin")
 def admin_users():
     conn = None
     cursor = None
@@ -670,7 +701,7 @@ def admin_users():
     )
 
 
-# --- RUTA DE DIAGNÓSTICO: devuelve TODOS los usuarios en JSON (sin auth) ---
+# devuelve TODOS los usuarios en JSON (sin auth) ---
 @app.route('/admin/api/users-all', methods=['GET'])
 def admin_api_users_all():
     conn = None

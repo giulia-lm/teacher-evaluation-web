@@ -23,10 +23,6 @@ ADMIN_USER = os.getenv("TEST_ADMIN_USER", "00000")
 ADMIN_PASS = os.getenv("TEST_ADMIN_PASS", "Admin123!")
 
 def single_login_flow(login_url, url_glob, username, password, panel_selector, headless=True):
-    """Función reutilizable para realizar un login y validar el panel.
-       url_glob: glob aceptado por wait_for_url, por ejemplo "**/alumnxs/inicio-alumnxs"
-       panel_selector: selector esperado en el dashboard (p. ej. "nav", "h1")
-    """
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=headless)
         context = browser.new_context()
