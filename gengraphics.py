@@ -79,7 +79,13 @@ def generate_graphics(data):
             fig = create_plot(answers_counts.keys(), answers_counts.values(), question_title)
 
             figures.update({img_name: fig})
-            figs_forms.update({current_form['form_title']: fig})
+            
+            form_title = current_form['form_title']
+
+            if form_title not in figs_forms:
+                figs_forms[form_title] = [fig]
+            else:
+                figs_forms[form_title].append(fig)
             #fig.savefig(img_name)
     
     
@@ -121,28 +127,32 @@ def figs_to_pdf(figures, pdf_title="teacher_metrics.pdf", doc_title="Reporte de 
         # -----------------------------
         # GRÁFICOS (uno por página)
         # -----------------------------
-        for form_name, fig in figures.items():
+        for form_name, _ in figures.items():
+            for fig in figures[form_name]:
+                fig_page = plt.figure(figsize=(8.27, 11.69))  
+                fig_page.subplots_adjust(top=0.87)  # espacio para título dentro de la página
 
-            # Crear una nueva página que incluye título + gráfico
-            fig_page = plt.figure(figsize=(8.27, 11.69))
-            ax_title = fig_page.add_subplot(111)
-            ax_title.axis("off")
+                fig_page.suptitle(
+                    f"Resultados del formulario '{form_name}'",
+                    fontsize=12,
+                    weight="bold",
+                    y=0.95
+                )
 
-            # Encabezado del gráfico
-            ax_title.text(
-                0.5, 0.95,
-                f"Resultados del formulario: {form_name}",
-                ha='center', va='top',
-                fontsize=18, weight='bold'
-            )
+                # subplot donde irá el gráfico
+                ax = fig_page.add_subplot(111)
 
-            # Insertar el gráfico original dentro de la página
-            # (lo dibujamos como imagen para no destruir la figura original)
-            plt.figure(fig) 
 
-            pdf.savefig(fig_page)
-            plt.close(fig_page)
+                for original_ax in fig.axes:
+                    original_ax_fig = original_ax.get_figure()
+                    original_ax_fig.canvas.draw()
+                    img = original_ax_fig.canvas.buffer_rgba()
 
+                    ax.imshow(img)
+                    ax.axis("off")
+
+                pdf.savefig(fig_page)
+                plt.close(fig_page)
 """
 def figs_to_pdf(figures, pdf_title="teacher_metrics.pdf",doc_title="Reporte de Métricas"):
     with PdfPages(pdf_title, metadata={'Title': doc_title}) as pdf:   

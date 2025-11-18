@@ -89,16 +89,23 @@
 
 <!-- Área de gráficos: usa display_figures para decidir qué mostrar -->
 <div class="all-forms">
+
+  {% if message %}
+    <p>
+      {{ message }}
+    </p>
+  {% endif %}
+
   {% if display_figures %}
     {% for name, img in display_figures.items() %}
       <div class="graph">
-        <img src="{{ img }}" alt="Gráfico {{ name }}" style="max-width:400px; border-radius:8px; margin:10px;">
+        <img src="{{ img }}" alt="Gráfico: {{ name }}" style="max-width:400px; border-radius:8px; margin:10px;">
       </div>
     {% endfor %}
-  {% else %}
-    <p>No hay gráficos disponibles.</p>
   {% endif %}
+
 </div>
+
 
 <div class="download_res_section">
   <a href="{{ url_for('download_teacher_report') }}" class="download_res_button">

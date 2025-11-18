@@ -385,8 +385,6 @@ def enviar_respuestas(id_encuesta):
 def results_teachers():
     conn = None
     cursor = None
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
 
     user_id = session['user_id']
 
@@ -485,19 +483,19 @@ def results_teachers():
     filter_type = request.args.get('filter-type')  # "Materia" o "Grupo"
     selected_id = request.args.get('second-filter')
 
-    filtered_figures = None
+    message = None
+    display_figures = {}
 
     if filter_type and selected_id:
         try:
             selected_id_int = int(selected_id)
-        except Exception:
+        except:
             selected_id_int = None
 
         if selected_id_int is not None:
-            cursor = None
             try:
                 conn, cursor = get_conn_and_cursor()
-                filtered_figures = {}
+                filtered = {}
                 pattern = re.compile(r'f(\d+)')
                 for name, img in (figures_base64 or {}).items():
                     m = pattern.search(name)
@@ -523,33 +521,33 @@ def results_teachers():
                     else:
                         continue
 
-                    existe = cursor.fetchone() is not None
-                    if existe:
-                        filtered_figures[name] = img
-            except Exception as e:
-                app.logger.exception("Error obteniendo resultados filtrados: %s", e)
-                filtered_figures = {}
-            finally:
-                try:
-                    if cursor:
-                        cursor.close()
-                except:
-                    pass
-                try:
-                    if conn:
-                        conn.close()
-                except:
-                    pass
+                    if cursor.fetchone():
+                        filtered[name] = img
 
-    if filter_type and selected_id is not None:
-        display_figures = filtered_figures or {}
+                if not filtered:
+                    message = f"Los alumnos no han contestado el formulario de esta {filter_type}"
+                else:
+                    display_figures = filtered
+                    
+            except Exception as e:
+                app.logger.exception("Error en filtrado: %s", e)
+                message = "Ocurrió un error cargando los resultados."
+            finally:
+                try: cursor.close()
+                except:pass
+                try:conn.close()
+                except:pass
     else:
+    # No hay filtro → mostrar todos los gráficos
         display_figures = figures_base64 or {}
+        if not display_figures:
+            message = "No hay gráficos disponibles."
 
     return render_template(
         'teachers/inicio-teachers.html',
         figures=figures_base64,
-        display_figures=display_figures
+        display_figures=display_figures,
+        message=message
     )
 
 
