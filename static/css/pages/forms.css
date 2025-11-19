@@ -33,7 +33,7 @@ section{
 
 .available-forms-textBox p {
   color: var(--brown);
-  font-family: "Nunito", sans-serif;
+  font-family: "Tahoma", sans-serif;
   font-size: 1.4rem;
 }
 
@@ -71,7 +71,7 @@ section{
 }
 
 .form-card p {
-  font-family: "Nunito", sans-serif;
+  font-family: "Tahoma", sans-serif;
   color: var(--brown);
   font-size: 1.2rem;
   margin-bottom: 1.5rem;
@@ -127,7 +127,7 @@ section{
 .intro{
   text-align: center;
   margin-bottom: 18px;
-  font-family: "Nunito", sans-serif;
+  font-family: "Tahoma", sans-serif;
 
 }
 
@@ -172,7 +172,7 @@ section{
 
 /* Texto de opción */
 .option-text{
-  font-family: "Nunito", sans-serif;
+  font-family: "Tahoma", sans-serif;
   font-size: 1rem;
   color: var(--brown);
 }
@@ -190,7 +190,7 @@ textarea{
   padding: 12px;
   border: 2px solid var(--brown);
   border-radius: 10px;
-  font-family: "Nunito", sans-serif;
+  font-family: "Tahoma", sans-serif;
   font-size: 1rem;
   color: var(--brown);
   resize: vertical;

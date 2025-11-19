@@ -214,7 +214,7 @@ span.psw a:hover {
 
 .flashes li{
   text-decoration: none;
-  font-family: "Nunito", sans-serif;
+  font-family: "Tahoma", sans-serif;
   font-size: 1.2rem;
   font-weight: bolder;
   color: var(--orange);
@@ -281,7 +281,7 @@ span.psw a:hover {
     opacity: 0;
     transform: translateX(20px);
     animation: fade-in-out 3s forwards;
-    font-family: "Nunito", sans-serif;
+    font-family: "Tahoma", sans-serif;
   }
 
   @keyframes fade-in-out {

@@ -6,6 +6,10 @@ menu, logo, footer
 
 */
 
+a{
+  text-decoration: none;
+}
+
 /* Navigation */
 
 nav {
@@ -132,7 +136,7 @@ nav.scrolled {
         .mobile-menu.active .mobile-nav-links li:nth-child(2) { transition-delay: 0.2s; }
 
         .mobile-nav-links a {
-            font-family: VT323;
+            font-family: "Fugaz One", sans-serif;
             font-size: 2.5rem;
             font-weight: 500;
             color: var(--primary-color);
@@ -198,7 +202,7 @@ ul{
 .footer-col ul li a{
   font-size: 16px;
   text-transform: capitalize;
-  color: var(--orange);
+  color: var(--brown);
   text-decoration: none;
   font-weight: 300;
   display: block;
@@ -206,7 +210,7 @@ ul{
 }
 
 .footer-col ul li a:hover{
-  color: var(--brown);
+  color: var(--orange);
   padding-left: 8px;
 }
 

@@ -101,6 +101,10 @@ def serve_page(folder, page):
         app.logger.debug(f"Template not found: templates/{template}")
         abort(404)
 
+@app.route('/preguntas-freq')
+def preguntas_freq():
+    return render_template('preguntas-freq.html')
+
 # Funciones para redirigir según tipo de usuario en el login
 
 @app.route('/alumnxs/inicio')

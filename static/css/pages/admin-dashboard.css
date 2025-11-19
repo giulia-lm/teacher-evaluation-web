@@ -23,7 +23,7 @@ h1, h2 {
 
 /* ---------- Filtros ---------- */
 .filters {
-    font-family: "Nunito", sans-serif;
+  font-family: "Tahoma", sans-serif;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -68,7 +68,7 @@ h1, h2 {
 }
 
 .role-filter{
-    font-family: "Nunito", sans-serif;
+    font-family: "Tahoma", sans-serif;
 }
 
 /* ---------- Tablas ---------- */
@@ -93,7 +93,7 @@ thead tr {
 }
 
 th, td {
-    font-family: "Nunito", sans-serif;
+  font-family: "Tahoma", sans-serif;
   padding: 0.9rem 1rem;
   text-align: left;
   border-bottom: 1px solid #f0f0f0;

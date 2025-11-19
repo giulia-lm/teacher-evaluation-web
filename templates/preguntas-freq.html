@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluación Docente</title>
+    
+    <!-- link a los styles -->
+    <link href="../static/css/pages/index-style.css" rel="stylesheet">
+    <link href="../static/css/base.css" rel="stylesheet">
+    <link href="../static/css/components.css" rel="stylesheet">
+    <link href="../static/css/layout.css" rel="stylesheet">
+    <link href="../static/css/pages/freq-quest.css" rel="stylesheet">
+    
+
+
+
+    <link rel="icon" type="image/jpg" href="../static/css/img/teacher-icon.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Fugaz+One&family=Orbitron:wght@400..900&family=VT323&display=swap" rel="stylesheet">
+</head>
+<body>
+
+   <!-- Navigation -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}">
+            <div class="logo"><img src="../../static/css/img/alumnx-icon.png" width="40" height="60">
+            Evaluación Docente
+            </div>
+            </a>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}">Inicio</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <ul class="mobile-nav-links">
+            <li><a href="{{ url_for('index') }}">Inicio</a></li>
+        </ul>
+    </div>
+
+
+<!-- Sección de inicio / Bienvenida -->
+<section class="welcome-section">
+
+  <div class="welcome-textBox">
+    <h2 class="welcome-text">Preguntas Frecuentes</h2>
+  </div>
+
+  <div class="welcome-image">
+    <img src="../../static/css/img/alumnx-icon.png" class="avatar">
+  </div>
+</section>
+
+
+<section class="all-questions-section">
+    
+  <div class="user-type-text">
+    <h2>Tipo de ususario: Alumnx</h2>
+  </div>
+
+  <div class="user-questions">
+    
+    <div class="question-card">
+      <label class="question" name="question"">¿Cómo contesto encuestas?</label>
+      <div class="answer">
+        Al iniciar sesión con tu matrícula y contraseña correctamente, deben aparecer los formularios disponibles para que contestes, sea de los profesores que te imparten una materia, o de la materia misma, por ejemplo:
+        <div class="example-image">
+          <img src="../static/css/img/avail-forms-example.png" class="example">
+        </div>
+        Solo necesitas oprimir el botón "Contestar" en cada encuesta disponible y se redirigirá al cuestionario completo.
+      </div>
+    </div>
+
+    <div class="question-card">
+      <label class="question" name="question"">¿Cómo envío una encuesta si ya contesté todas las preguntas?</label>
+      <div class="answer">
+        Presionaste en "Contestar", se abrió el formulario y has contestado las preguntas, para enviar y registrar tu respuesta, debes oprimir el botón "Enviar encuesta" al final de todas las preguntas.
+        <div class="example-image">
+          <img src="../static/css/img/send-form-example.png" class="example">
+        </div>
+        En caso de no haber contestado una de las preguntas, no podrás enviar tus respuestas, ¡Asegúrate de contestar todo! 
+        Al contestar, se te redirigirá al inicio junto con un mensaje de "Encuesta enviada correctamente", así podrás contestar todas las encuestas disponibles que resten.
+      <div class="example-image">
+          <img src="../static/css/img/sended-alert-example.png" class="example">
+        </div>
+      </div>
+
+  </div>
+
+  <div class="user-type-text">
+    <h2>Tipo de ususario: Docente</h2>
+  </div>
+
+  <div class="user-questions">
+    
+    <div class="question-card">
+      <label class="question" name="question"">¿Por qué no puedo observar mis gráficos resultados?</label>
+      <div class="answer">
+        Es normal que los gráficos no aparecen recien iniciada sesión, es necesario filtrar los gráficos en orden de su aparición, hay dos filtros, el primero es para escoger si desea ver los gráficos de una Materia o Grupo.
+        <div class="example-image">
+          <img src="../static/css/img/first-filter-example.png" class="example">
+        </div>
+        Y en el segundo filtro se selecciona la materia/grupo del que desea observar resultados.
+        <div class="example-image">
+          <img src="../static/css/img/second-filter-example.png" class="example">
+        </div>
+        Por último, debe oprimir el botón "Ver resultados" para que los gráficos sean desplegados correctamente.
+        <div class="example-image">
+          <img src="../static/css/img/view-results-example.png" class="example">
+        </div>
+      </div>
+    </div>
+
+    <div class="question-card">
+      <label class="question" name="question"">¿Cómo descargo un archivo PDF con mis gráficos relacionados?</label>
+      <div class="answer">
+        Al final de todos los gráficos resultantes después del filtro (o un espacio vacío en caso de no haber filtrado o falta de respuestas), hay un botón "Descargar reporte PDF", solo es necesario oprimirlo y esperar unos segundos para que se descargue automáticamente (su navegador podría requerirle permiso para hacerlo),
+        <div class="example-image">
+          <img src="../static/css/img/download-report-example.png" class="example">
+        </div>
+      </div>
+    </div>
+
+
+  <div class="user-type-text">
+    <h2>Tipo de ususario: Admin</h2>
+  </div>
+
+  <div class="user-questions">
+    
+    <div class="question-card">
+      <label class="question" name="question"">¿Cómo edito la información de un usuario?</label>
+      <div class="answer">
+      aa
+        <div class="example-image">
+          <img src="../static/css/img/edit-user-button-example.png" class="example">
+        </div>
+        Y 
+        <div class="example-image">
+          <img src="../static/css/img/edit-user-form-example.png" class="example">
+        </div>
+        Por último
+      </div>
+    </div>
+
+    <div class="question-card">
+      <label class="question" name="question"">¿Cómo elimino un usuario?</label>
+      <div class="answer">
+        lalal
+        <div class="example-image">
+          <img src="../static/css/img/delete-user-button-example.png" class="example">
+        </div>
+        lalala esta seguro?
+        <div class="example-image">
+          <img src="../static/css/img/succes-deleting-example.png" class="example">
+        </div>
+      </div>
+ </div>
+
+    <div class="question-card">
+      <label class="question" name="question"">¿Cómo agrego un nuevo usuario?</label>
+      <div class="answer">
+        boton
+        <div class="example-image">
+          <img src="../static/css/img/add-button-example.png" class="example">
+        </div>
+        form
+        <div class="example-image">
+          <img src="../static/css/img/add-user-form-example.png" class="example">
+        </div>
+        succes
+        <div class="example-image">
+          <img src="../static/css/img/succes-adding-example.png" class="example">
+        </div>
+      </div>
+  </div>
+
+  <div class="question-card">
+      <label class="question" name="question"">¿Cómo agrego una nueva materia?</label>
+      <div class="answer">
+        boton
+        <div class="example-image">
+          <img src="../static/css/img/add-button-example.png" class="example">
+        </div>
+        form
+        <div class="example-image">
+          <img src="../static/css/img/add-user-form-example.png" class="example">
+        </div>
+        succes
+        <div class="example-image">
+          <img src="../static/css/img/succes-adding-example.png" class="example">
+        </div>
+      </div>
+  </div>
+
+  <div class="question-card">
+      <label class="question" name="question"">¿Cómo descargo un archivo PDF con las respuestas registradas?</label>
+      <div class="answer">
+        Al final de todas las tablas, hay un botón "Descargar reporte de respuestas PDF", solo es necesario oprimirlo y esperar unos segundos para que se descargue automáticamente (su navegador podría requerirle permiso para hacerlo),
+        <div class="example-image">
+          <img src="../static/css/img/download-admin-example.png" class="example">
+        </div>
+      </div>
+    </div>
+
+</section>
+<!-- Footer -->
+  <footer class="footer">
+     <div class="container">
+      <div class="row">
+        <div class="footer-col">
+          <h4>Evaluación Docente</h4>
+          <ul>
+            <li><a href="preguntas.html">Preguntas frecuentes</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Contáctanos</h4>
+          <ul>
+            <li><a href="mailto:evaluaciondocente@uaem.edu.mx">evaluaciondocente@uaem.edu.mx</a></li>
+            <li><a href="tel:+557770000000"> +55 (777) 000 0000 (Llamadas)</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Síguenos</h4>
+          <div class="social-links">
+            <a href="https://www.facebook.com/"><i class="fab fa-facebook-f"></i></a>
+            <a href="https://www.instagram.com/"><i class="fab fa-instagram"></i></a>
+          </div>
+        </div>
+      </div>
+     </div>
+  </footer>
+
+</body>
+</html>

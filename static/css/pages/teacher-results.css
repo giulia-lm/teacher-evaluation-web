@@ -18,7 +18,7 @@
 
 .ev-results-textBox p {
   color: var(--brown);
-  font-family: "Nunito", sans-serif;
+  font-family: "Tahoma", sans-serif;
   font-size: 1.4rem;
 }
 /**/
@@ -63,7 +63,7 @@
 
 /* Label general */
 .ev-results-section label {
-  font-family: "Nunito", sans-serif;
+  font-family: "Tahoma", sans-serif;
   color: var(--ev-brown);
   font-size: 0.98rem;
   margin-bottom: 6px;
@@ -81,7 +81,7 @@
   border-radius: 10px;
   border: 1.6px solid rgba(107,79,58,0.14);
   background-color: #fff;
-  font-family: "Nunito", sans-serif;
+  font-family: "Tahoma", sans-serif;
   font-size: 1rem;
   color: var(--ev-brown);
   cursor: pointer;

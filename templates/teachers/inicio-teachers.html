@@ -24,9 +24,11 @@
     <!-- Navigation -->
     <nav id="navbar">
         <div class="nav-container">
+            <a href="{{ url_for('index') }}">
             <div class="logo"><img src="../../static/css/img/teacher-icon.png" width="40" height="60">
             Evaluación Docente
             </div>
+            </a>
             <ul class="nav-links">
                 <li><a href="{{ url_for('logout') }}">Cerrar sesión</a></li>
             </ul>
