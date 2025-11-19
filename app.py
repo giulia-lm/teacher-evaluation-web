@@ -673,6 +673,26 @@ def admin_users():
         current_app.logger.exception("Error listando usuarios admin: %s", e)
         users = []
         total = 0
+    try:
+        cursor.execute("""
+            SELECT g.id AS id, g.nombre AS name
+            FROM grupo g
+            ORDER BY g.id;
+        """)
+        grupos = cursor.fetchall() or []
+    except Exception as e:
+        current_app.logger.exception("Error listando grupos: ", e)
+
+    try:
+        cursor.execute("""
+            SELECT m.id AS id, m.name AS name
+            FROM materia m
+            ORDER BY m.id;
+        """)
+        materias = cursor.fetchall() or []
+    except Exception as e:
+        current_app.logger.exception("Error listando materias: ", e)
+
     finally:
         try:
             if cursor:
@@ -710,7 +730,9 @@ def admin_users():
         per_page=per_page,
         total=total,
         role_filter=role_filter,
-        q=q
+        q=q,
+        grupos=grupos,
+        materias=materias
     )
 
 
@@ -1029,15 +1051,21 @@ def is_admin_session():
     role_in_session = (session.get('role') or session.get('user_role') or '').strip().lower()
     return ('user_id' in session) and (role_in_session == 'admin')
 
+
 @app.route('/admin/api/user-create', methods=['POST'])
 def admin_api_user_create():
     if not is_admin_session():
         return jsonify({'error': 'Prohibido'}), 403
+    
     data = request.get_json() or {}
+
+    id = (data.get('id') or '').strip()
     name = (data.get('name') or '').strip()
     matricula = (data.get('matricula') or '').strip()
     password = data.get('password') or ''
     role = (data.get('role') or '').strip()
+
+
     
     if not name or not matricula or not role:
         return jsonify({'error': 'Falta rellenar campos'}), 400
@@ -1058,9 +1086,28 @@ def admin_api_user_create():
             "INSERT INTO `user` (name, matricula, password, role, created_at) VALUES (%s, %s, %s, %s, NOW())",
             (name, matricula, pw_hash, role)
         )
+        user_id = cursor.lastrowid
+
+        if role == 'alumnx':
+            group_id = data.get('alumnx_grupo')
+            cursor.execute(
+             "SELECT id_materia FROM materia_grupo WHERE id_grupo = %s", (group_id, ) ) #id de las materias que se dan en ese grupo
+            materias_ids = cursor.fetchall()
+            for id_materia in materias_ids:
+                cursor.execute("INSERT INTO `alumnx_materia` (id_alumnx, id_course) VALUES (%s, %s)", (user_id,id_materia['id_materia']))
+
+        if role == 'docente':
+            materias_ids = data.get('docente_materias') or []
+            print("MATERIAS:",materias_ids)
+            for id_materia in materias_ids:
+                print("IND MAT::",id_materia)
+                cursor.execute("INSERT INTO `docente_materia` (id_docente, id_materia) VALUES (%s, %s)", (user_id,id_materia))
+
+
+
         conn.commit()
-        new_id = cursor.lastrowid
-        cursor.execute("SELECT id, name, matricula, role, created_at FROM `user` WHERE id = %s", (new_id,))
+        
+        cursor.execute("SELECT id, name, matricula, role, created_at FROM `user` WHERE id = %s", (user_id,))
         new_user = cursor.fetchone()
         flash("Usuario registrado correctamente")
         return jsonify({'ok': True, 'user': new_user}), 201
@@ -1108,9 +1155,26 @@ def admin_api_user_update():
     conn = cursor = None
     try:
         conn, cursor = get_conn_and_cursor()
-
-        
         cursor.execute(sql, tuple(params))
+
+        if role == 'alumnx':
+            cursor.execute("DELETE FROM alumnx_materia WHERE id_alumnx=%s", (uid,))
+
+            group_id = data.get('alumnx_grupo')
+            cursor.execute(
+             "SELECT id_materia FROM materia_grupo WHERE id_grupo = %s", (group_id, ) ) #id de las materias que se dan en ese grupo
+            materias_ids = cursor.fetchall()
+
+            for id_materia in materias_ids:
+                cursor.execute("INSERT INTO `alumnx_materia` (id_alumnx, id_course) VALUES (%s, %s)", (uid, id_materia['id_materia']))
+
+        if role == 'docente':
+            cursor.execute("DELETE FROM docente_materia WHERE id_docente=%s", (uid,))
+            materias_ids = data.get('docente_materias')
+
+            for id_materia in materias_ids:
+                cursor.execute("INSERT INTO `docente_materia` (id_docente, id_materia) VALUES (%s, %s)", (uid, id_materia))
+
         conn.commit()
         cursor.execute("SELECT id, name, matricula, role, created_at FROM `user` WHERE id = %s", (uid,))
         user = cursor.fetchone()
@@ -1133,12 +1197,15 @@ def admin_api_user_delete():
         return jsonify({'error': 'Prohibido'}), 403
     data = request.get_json() or {}
     uid = data.get('id')
+    role = (data.get('role') or '').strip()
     if not uid:
         return jsonify({'error': 'Falta de id.'}), 400
     conn = cursor = None
     try:
         conn, cursor = get_conn_and_cursor()
+
         cursor.execute("DELETE FROM `user` WHERE id = %s", (uid,))
+
         conn.commit()
         flash("Usuario eliminado correctamente")
         return jsonify({'ok': True, 'deleted_id': uid})

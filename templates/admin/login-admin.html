@@ -30,7 +30,7 @@
             </a>
             <ul class="nav-links">
                 <li><a href="/">Cambiar tipo de usuarix</a></li>
-                <li><a href="preguntas.html">Preguntas frecuentes</a></li>
+                <li><a href="{{ url_for('preguntas_freq') }}">Preguntas frecuentes</a></li>
             </ul>
         </div>
     </nav>
@@ -39,7 +39,7 @@
     <div class="mobile-menu" id="mobileMenu">
         <ul class="mobile-nav-links">
           <li><a href="/">Cambiar tipo de usuarix</a></li>
-          <li><a href="preguntas.html">Preguntas frecuentes</a></li>
+          <li><a href="{{ url_for('preguntas_freq') }}">Preguntas frecuentes</a></li>
         </ul>
     </div>
 
@@ -74,7 +74,6 @@
 
 </section>
 
-
 <!-- Footer -->
   <footer class="footer">
      <div class="container">
@@ -82,22 +81,23 @@
         <div class="footer-col">
           <h4>Evaluación Docente</h4>
           <ul>
-            <li><a href="about.html">Sobre nosotros</a></li>
+            <li><a href="{{ url_for('preguntas_freq') }}">Preguntas frecuentes</a></li>
+
           </ul>
         </div>
         <div class="footer-col">
           <h4>Contáctanos</h4>
           <ul>
-            <li><a href="#">evaluaciondocente@uaem.edu.mx</a></li>
-            <li><a href="#">000000 (Llamadas)</a></li>
+            <li><a href="mailto:evaluaciondocente@uaem.edu.mx">evaluaciondocente@uaem.edu.mx</a></li>
+            <li><a href="tel:+557770000000"> +55 (777) 000 0000 (Llamadas)</a></li>
           </ul>
         </div>
 
         <div class="footer-col">
           <h4>Síguenos</h4>
           <div class="social-links">
-            <a href="https://www.facebook.com/cccmty/?locale=es_LA"><i class="fab fa-facebook-f"></i></a>
-            <a href="https://www.instagram.com/colegio.cristobalcolon.mty/?fbclid=IwY2xjawM8a4VleHRuA2FlbQIxMABicmlkETFiQXdjY0lVZkY2bmhBbDFhAR4HDNXPP2MYBImxhU2n7SItrSkisMgRafUG_2o0U6dvmrX68UIhgwmk_Nh0DQ_aem_tv28U4g3-3Nv-36WvzmEhQ"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.facebook.com/"><i class="fab fa-facebook-f"></i></a>
+            <a href="https://www.instagram.com/"><i class="fab fa-instagram"></i></a>
           </div>
         </div>
       </div>

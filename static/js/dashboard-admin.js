@@ -20,32 +20,115 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 5000); 
   }
 
+  function toastConfirm(message) {
+  return new Promise((resolve) => {
+    const container = document.getElementById("toast-container");
 
-  function showModal(mode='create', user={}) {
+    const toast = document.createElement("div");
+    toast.classList.add("toast-confirm");
+
+    toast.innerHTML = `
+      <div>${message}</div>
+      <div class="toast-confirm-buttons">
+        <button class="toast-btn toast-no">Cancelar</button>
+        <button class="toast-btn toast-yes">Eliminar</button>
+      </div>
+    `;
+
+    container.appendChild(toast);
+
+    toast.querySelector(".toast-yes").onclick = () => {
+      toast.remove();
+      resolve(true);
+    };
+
+    toast.querySelector(".toast-no").onclick = () => {
+      toast.remove();
+      resolve(false);
+    };
+  });
+}
+
+const roleSelect = document.getElementById('user-role');
+const alumnxDiv   = document.getElementById('alumnx-options');
+const docenteDiv  = document.getElementById('docente-options');
+
+
+roleSelect.addEventListener('change', () => {
+  const role = roleSelect.value;
+
+  if (role === 'alumnx') {
+    alumnxDiv.style.display = 'block';
+    docenteDiv.style.display = 'none';
+  } 
+  else if (role === 'docente') {
+    alumnxDiv.style.display = 'none';
+    docenteDiv.style.display = 'block';
+  } 
+  else {
+    alumnxDiv.style.display = 'none';
+    docenteDiv.style.display = 'none';
+  }
+});
+
+function showModal(mode='create', user={}) {
     modal.style.display = 'block';
     modalTitle.textContent = mode === 'create' ? 'Agregar usuario' : 'Editar usuario';
+
     document.getElementById('user-id').value = user.id || '';
     document.getElementById('user-name').value = user.name || '';
     document.getElementById('user-matricula').value = user.matricula || '';
-    document.getElementById('user-role').value = user.role || 'alumnx';
-    document.getElementById('user-password').value = ''; // siempre vacío
-  }
+
+    // Reset de selects
+    document.getElementById('alumnx-grupo').value = user.alumnx_grupo || '';
+    if (user.docente_materias) {
+      document.querySelectorAll('input[name="docente_materias"]').forEach(cb => {
+        cb.checked = user.docente_materias.includes(parseInt(cb.value));
+      });
+    } else {
+      document.querySelectorAll('input[name="docente_materias"]').forEach(cb => cb.checked = false);
+    }
+
+    roleSelect.disabled = (mode === 'edit');
+
+    // Forzar cambio visual según rol
+    roleSelect.value = user.role || 'alumnx';
+    roleSelect.dispatchEvent(new Event('change'));
+
+    document.getElementById('user-password').value = '';
+}
+
   function hideModal() {
     modal.style.display = 'none';
   }
+
   btnOpenAdd.addEventListener('click', () => showModal('create'));
   btnCancel.addEventListener('click', hideModal);
 
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
+
     const id = document.getElementById('user-id').value;
+    const materias = Array.from(
+      document.querySelectorAll('input[name="docente_materias"]:checked')
+    ).map(cb => parseInt(cb.value));
+
     const payload = {
-      id: id || undefined,
+      id: document.getElementById('user-id').value || undefined,
       name: document.getElementById('user-name').value.trim(),
       matricula: document.getElementById('user-matricula').value.trim(),
       role: document.getElementById('user-role').value,
-      password: document.getElementById('user-password').value
+      password: document.getElementById('user-password').value,
     };
+
+    if (payload.role === "docente") {
+      payload.docente_materias = materias;   
+    } 
+
+
+    if (payload.role === "alumnx") {
+      payload.alumnx_grupo = parseInt(document.getElementById("alumnx-grupo").value);
+    }
     try {
       const url = id ? '/admin/api/user-update' : '/admin/api/user-create';
       const resp = await fetch(url, {
@@ -56,7 +139,11 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await resp.json();
       if (resp.ok) {
-        showToast("Usuario creado correctamente");
+        if(url.search('update')){
+          showToast("Usuario editado correctamente");
+        }else if(url.search('create')){
+          showToast("Usuario creado correctamente");
+        }    
         loadAllUsers();
       }
       if (!resp.ok) {
@@ -75,7 +162,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // BORRAR con confirmación
   async function deleteUser(id) {
-    if (!confirm('¿Seguro que quieres eliminar al usuario #' + id + '?')) return;
+    const ok = await toastConfirm('¿Seguro que quieres eliminar al usuario #' + id + '?');
+    if (!ok) return;
     try {
       const resp = await fetch('/admin/api/user-delete', {
         method: 'POST',

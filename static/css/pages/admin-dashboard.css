@@ -93,16 +93,67 @@ thead tr {
 }
 
 th, td {
-  font-family: "Tahoma", sans-serif;
   padding: 0.9rem 1rem;
   text-align: left;
   border-bottom: 1px solid #f0f0f0;
 }
 
+td {
+  font-family: "Tahoma", sans-serif;
+}
+
 th {
+  font-family: "Fugaz One", sans-serif;
+  color: var(--brown);
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+#toast-container {
+  position: fixed;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  font-family: "Tahoma", sans-serif;
+}
+
+.toast-confirm {
+  background: var(--yellow);
+  color: var(--brown);
+  padding: 15px;
+  margin-top: 10px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 250px;
+}
+
+.toast-confirm-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.toast-btn {
+  padding: 6px 12px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.toast-yes {
+  background: var(--brown);
+  color: var(--yellow);
+}
+
+.toast-no {
+  border: 1px var(--brown);
+
+  background: var(--yellow);
+  color: var(--brown);
+ 
 }
 
 
