@@ -127,9 +127,9 @@
   <label>Materias impartidas:</label>
 
   {% for m in materias %}
-    <label class="checkbox-item">
-      <input type="checkbox" name="docente_materias" value="{{ m.id }}">
-      {{ m.name }}
+    <label class="checkbox-container">{{ m.name }}
+      <input type="checkbox" name="docente_materias" value="{{ m.id }}"> 
+      <span class="checkmark"></span>
     </label>
   {% endfor %}
 </div>
