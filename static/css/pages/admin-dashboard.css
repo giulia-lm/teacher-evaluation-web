@@ -345,13 +345,13 @@ th {
 }
 
 /* ===== Formulario ===== */
-#user-form {
+#user-form, #materia-form {
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
 }
 
-#user-form label {
+#user-form label, #materia-form label {
   display: flex;
   flex-direction: column;
   font-size: 0.9rem;
@@ -361,7 +361,9 @@ th {
 }
 
 #user-form input,
-#user-form select {
+#user-form select,
+#materia-form input,
+#materia-form select{
   padding: 0.55rem 0.7rem;
   border-radius: 8px;
   border: 1px solid #d1d5db;
@@ -371,7 +373,9 @@ th {
 }
 
 #user-form input:focus,
-#user-form select:focus {
+#user-form select:focus,
+#materia-form  input:focus,
+#materia-form select:focus  {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(14, 165, 164, 0.15);
 }

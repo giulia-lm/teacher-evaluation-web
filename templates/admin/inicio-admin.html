@@ -134,9 +134,6 @@
   {% endfor %}
 </div>
 
-
-
-
       <label>Contraseña
         <input type="password" id="user-password" name="password" placeholder="Dejar vacío si no hay cambios">
       </label>
@@ -163,7 +160,52 @@
     </thead>
     <tbody></tbody>
   </table>
+
+
+<div class="admin-controls">
+  <button id="btn-add-materia" class="btn-primary">Agregar materia</button>
+</div>
 </section>
+
+<div id="materia-modal" class="modal">
+  <div class="modal-content">
+    <h3 id="modal-title">Agregar materia</h3>
+    <form id="materia-form">
+      <input type="hidden" name="id" id="materia-id">
+
+      <label>Nombre
+        <input name="name" id="materia-name" required>
+      </label>
+
+<div id="docentes-options">
+  <label>Docente que imparte la materia:
+    <select id="docente-materia">
+      {% for d in docentes %}
+        <option value="{{ d.id }}">{{ d.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+</div>
+
+<div id="grupos-options">
+  <label>Grupo donde se imparte:
+    <select id="grupo" name="grupo">
+      {% for g in grupos %}
+        <option value="{{ g.id }}">{{ g.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+</div>
+
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" id="btn-save-materia">Guardar</button>
+        <button type="button" class="btn-secondary" id="materia-cancel">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 
 
 <section class="respuestas-dashboard">

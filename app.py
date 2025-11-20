@@ -693,6 +693,17 @@ def admin_users():
     except Exception as e:
         current_app.logger.exception("Error listando materias: ", e)
 
+    try:
+        cursor.execute("""
+            SELECT d.id AS id, d.name AS name
+            FROM user d
+            WHERE role = 'docente'
+            ORDER BY d.id;
+        """)
+        docentes = cursor.fetchall() or []
+    except Exception as e:
+        current_app.logger.exception("Error listando docentes: ", e)
+
     finally:
         try:
             if cursor:
@@ -732,7 +743,8 @@ def admin_users():
         role_filter=role_filter,
         q=q,
         grupos=grupos,
-        materias=materias
+        materias=materias,
+        docentes=docentes
     )
 
 
@@ -1095,16 +1107,58 @@ def admin_api_user_create():
             materias_ids = cursor.fetchall()
             for id_materia in materias_ids:
                 cursor.execute("INSERT INTO `alumnx_materia` (id_alumnx, id_course) VALUES (%s, %s)", (user_id,id_materia['id_materia']))
+                
 
         if role == 'docente':
-            materias_ids = data.get('docente_materias') or []
-            print("MATERIAS:",materias_ids)
-            for id_materia in materias_ids:
-                print("IND MAT::",id_materia)
-                cursor.execute("INSERT INTO `docente_materia` (id_docente, id_materia) VALUES (%s, %s)", (user_id,id_materia))
+            materias_ids = data.get('docente_materias', [])
 
+            # 1. Insertar relaciones docente ↔ materias
+            for materia_id in materias_ids:
+                cursor.execute(
+                    "INSERT INTO docente_materia (id_docente, id_materia) VALUES (%s, %s)",
+                    (user_id, materia_id)
+                )
 
+            # 2. Crear un único form para el docente
+            form_title = f'Form - Docente: {name}'
+            description = f'Evaluación del/la docente ({name})'
 
+            cursor.execute("""
+                INSERT INTO form (title, description, id_docente, id_materia, start_at, end_at, active)
+                VALUES (%s, %s, %s, NULL, NOW(), '2025-12-31 23:59:59', 1)
+            """, (form_title, description, user_id))
+
+            form_id = cursor.lastrowid
+
+            # 3. Crear preguntas
+            preguntas = [
+                "El docente explica los conceptos claramente.",
+                "El docente fomenta la participación.",
+                "El docente domina el contenido.",
+                "Los recursos son adecuados.",
+                "El docente muestra interés por el aprendizaje.",
+                "Comentarios adicionales (texto libre)."
+            ]
+
+            for texto in preguntas[:-1]:  # multiple choice
+                cursor.execute("""
+                    INSERT INTO question (id_form, texto_pregunta, tipo)
+                    VALUES (%s, %s, 'multiple')
+                """, (form_id, texto))
+                q_id = cursor.lastrowid
+                for i, choice in enumerate(["Muy de acuerdo", "De acuerdo", "En desacuerdo", "Muy en desacuerdo"], start=1):
+                    cursor.execute("""
+                        INSERT INTO choice (id_question, choice_text, sort_order)
+                        VALUES (%s, %s, %s)
+                    """, (q_id, choice, i))
+
+            # último texto libre
+            cursor.execute("""
+                INSERT INTO question (id_form, texto_pregunta, tipo)
+                VALUES (%s, %s, 'texto')
+            """, (form_id, preguntas[-1]))
+
+            
         conn.commit()
         
         cursor.execute("SELECT id, name, matricula, role, created_at FROM `user` WHERE id = %s", (user_id,))
@@ -1219,7 +1273,94 @@ def admin_api_user_delete():
         try:
             if conn: conn.close()
         except: pass
+@app.route('/admin/api/materia-create', methods=['POST'])
+def admin_api_materia_create():
+    if not is_admin_session():
+        return jsonify({'error': 'Prohibido'}), 403
+    
+    data = request.get_json() or {}
 
+    name = (data.get('name') or '').strip()
+    id_docente = data.get('docente')  # viene tal cual del JSON
+    id_grupo = data.get('grupo')      # viene tal cual del JSON
+
+    if not name or not id_docente or not id_grupo:
+        return jsonify({'error': 'Faltan campos'}), 400
+    
+    conn = cursor = None
+    try:
+        conn, cursor = get_conn_and_cursor()
+
+        # validar duplicado
+        cursor.execute("SELECT 1 FROM materia WHERE name = %s", (name,))
+        if cursor.fetchone():
+            return jsonify({'error': 'Esta materia ya existe.'}), 400
+
+        # insertar materia
+        cursor.execute("INSERT INTO materia (name) VALUES (%s)", (name,))
+        materia_id = cursor.lastrowid
+
+        # relaciones
+        cursor.execute(
+            "INSERT INTO materia_grupo (id_materia, id_grupo) VALUES (%s, %s)",
+            (materia_id, id_grupo)
+        )
+        cursor.execute(
+            "INSERT INTO docente_materia (id_materia, id_docente) VALUES (%s, %s)",
+            (materia_id, id_docente)
+        )
+
+        # Crear form de materia
+        form_title = f"Form - Materia: {name}"
+        description = f"Evaluación de la materia ({name})"
+
+        cursor.execute("""
+            INSERT INTO form (title, description, id_materia, start_at, end_at, active)
+            VALUES (%s, %s, %s, NOW(), '2025-12-31 23:59:59', 1)
+        """, (form_title, description, materia_id))
+        
+        form_id = cursor.lastrowid
+
+        # Preguntas
+        preguntas = [
+            "Los temas son interesantes",
+            "El semestre es suficiente para abarcar lo necesario",
+            "El temario es completo.",
+            "Los recursos son adecuados.",
+            "Me interesa el contenido de la materia.",
+            "Comentarios adicionales (texto libre)."
+        ]
+
+        # Multiple choice
+        for texto in preguntas[:-1]:
+            cursor.execute("""
+                INSERT INTO question (id_form, texto_pregunta, tipo)
+                VALUES (%s, %s, 'multiple')
+            """, (form_id, texto))
+            q_id = cursor.lastrowid
+
+            for i, choice in enumerate(["Muy de acuerdo", "De acuerdo", "En desacuerdo", "Muy en desacuerdo"], start=1):
+                cursor.execute("""
+                    INSERT INTO choice (id_question, choice_text, sort_order)
+                    VALUES (%s, %s, %s)
+                """, (q_id, choice, i))
+
+        # Pregunta texto
+        cursor.execute("""
+            INSERT INTO question (id_form, texto_pregunta, tipo)
+            VALUES (%s, %s, 'texto')
+        """, (form_id, preguntas[-1]))
+
+        conn.commit()
+
+        return jsonify({'ok': True, 'materia_id': materia_id}), 201
+
+    except Exception as e:
+        current_app.logger.exception("Error creando materia admin: %s", e)
+        return jsonify({'error': 'Error creando materia', 'details': str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
 
 
 if __name__ == '__main__':
