@@ -64,8 +64,24 @@
 
   <h1>Panel de Administración</h1>
 {% block content %}
+
 <section class="admin-dashboard">
   <h2>Usuarixs registradxs</h2>
+
+  <div class="filters">
+  <select id="filtro-rol">
+    <option value="">Todos los roles</option>
+    <option value="alumnx">Alumnxs</option>
+    <option value="docente">Docentes</option>
+    <option value="admin">Admins</option>
+  </select>
+
+  <input type="month" id="filtro-creado">
+  <button id="btn-filtrar-users">Filtrar</button>
+  <button id="btn-reset-users">Reset</button>
+</div>
+
+
   <table id="users-table">
     <thead>
       <tr>
@@ -149,6 +165,27 @@
 
 <section class="materias-dashboard">
   <h2>Materias registradas</h2>
+
+  <div class="filters">
+  <select id="filtro-grupo">
+    <option value="">Todos los grupos</option>
+    {% for g in grupos %}
+      <option value="{{ g.id }}">{{ g.name }}</option>
+    {% endfor %}
+  </select>
+
+  <select id="filtro-docente">
+    <option value="">Todos los docentes</option>
+    {% for d in docentes %}
+      <option value="{{ d.id }}">{{ d.name }}</option>
+    {% endfor %}
+  </select>
+
+  <button id="btn-filtrar-materias">Filtrar</button>
+  <button id="btn-reset-materias">Reset</button>
+</div>
+
+
   <table id="materias-table">
     <thead>
       <tr>
@@ -211,6 +248,17 @@
 
 <section class="respuestas-dashboard">
   <h2>Respuestas de Encuestas</h2>
+
+  <div class="filters">
+  <input type="text" id="filtro-form" placeholder="Nombre del formulario">
+  <input type="text" id="filtro-alumno" placeholder="Nombre del alumno">
+  <input type="date" id="filtro-fecha">
+  <button id="btn-filtrar-respuestas">Filtrar</button>
+  <button id="btn-reset-respuestas">Reset</button>
+</div>
+
+
+
 <table id="responses-table">
   <thead>
     <tr>

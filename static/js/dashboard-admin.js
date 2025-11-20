@@ -54,6 +54,7 @@ const alumnxDiv   = document.getElementById('alumnx-options');
 const docenteDiv  = document.getElementById('docente-options');
 
 
+
 roleSelect.addEventListener('change', () => {
   const role = roleSelect.value;
 
@@ -189,8 +190,13 @@ function showModal(mode='create', user={}) {
   }
 
   async function loadAllUsers() {
+    
     try {
+      
+      //const resp = await fetch('/admin/api/users-all?' + params.toString());
+      
       const resp = await fetch('/admin/api/users-all', { credentials: 'same-origin' });
+
       if (!resp.ok) {
         const txt = await resp.text();
         tableBody.innerHTML = `<tr><td colspan="6">Error: ${resp.status}</td></tr>`;
@@ -206,40 +212,40 @@ function showModal(mode='create', user={}) {
 
       
       users.forEach(u => {
-    const tr = document.createElement('tr');
+        const tr = document.createElement('tr');
 
-    // --- Convertir la fecha a español ---
-    let fecha = "";
-    if (u.created_at) {
-      const date = new Date(u.created_at);
-      fecha = date.toLocaleString("es-MX", {
-        timeZone: "America/Mexico_City",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit"
-      });
-    }
-    // -------------------------------------
-    const acciones = u.role === 'admin'
-    ? `<button class="btn-edit" data-id="${u.id}">Editar</button>`
-    : `
-        <button class="btn-edit" data-id="${u.id}">Editar</button>
-        <button class="btn-delete" data-id="${u.id}">Borrar</button>
-      `;
+        // --- Convertir la fecha a español ---
+        let fecha = "";
+        if (u.created_at) {
+          const date = new Date(u.created_at);
+          fecha = date.toLocaleString("es-MX", {
+            timeZone: "America/Mexico_City",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+          });
+        }
+        // -------------------------------------
+        const acciones = u.role === 'admin'
+        ? `<button class="btn-edit" data-id="${u.id}">Editar</button>`
+        : `
+            <button class="btn-edit" data-id="${u.id}">Editar</button>
+            <button class="btn-delete" data-id="${u.id}">Borrar</button>
+          `;
 
 
-    tr.innerHTML = `
-      <td>${u.id ?? ''}</td>
-      <td>${u.name ?? ''}</td>
-      <td>${u.matricula ?? ''}</td>
-      <td>${u.role ?? ''}</td>
-      <td>${fecha}</td>
-      <td>${acciones}</td>
-    `;
-    tableBody.appendChild(tr);
-});
+        tr.innerHTML = `
+          <td>${u.id ?? ''}</td>
+          <td>${u.name ?? ''}</td>
+          <td>${u.matricula ?? ''}</td>
+          <td>${u.role ?? ''}</td>
+          <td>${fecha}</td>
+          <td>${acciones}</td>
+        `;
+        tableBody.appendChild(tr);
+    });
 
       // attach handlers
       document.querySelectorAll('.btn-edit').forEach(b => {
@@ -284,6 +290,15 @@ function showModal(mode='create', user={}) {
   modal.addEventListener('click', (e) => {
     if (e.target === modal) modal.classList.remove('show');
   });
+  
+  /*document.getElementById('btn-filtrar-users').addEventListener('click', loadAllUsers);
+  document.getElementById('btn-reset-users').addEventListener('click', () => {
+  document.getElementById('filtro-rol').value = '';
+  document.getElementById('filtro-creado').value = '';
+  loadAllUsers();
+});*/
+
+
 });
 
 });

@@ -614,28 +614,12 @@ def alias_admin_inicio():
 def admin_users():
     conn = None
     cursor = None
-    """
-    Endpoint para listar usuarios (paginado, búsqueda, filtro por rol).
-    Devuelve JSON si se pide ?format=json o si Accept: application/json.
-    """
 
-    role_in_session = (session.get('role') or session.get('user_role'))
-    if 'user_id' not in session or (role_in_session or '').strip().lower() != 'admin':
-        current_app.logger.info("Acceso rechazado a /admin/inicio - session keys: %s", dict(session))
-        return redirect(url_for('login'))
-
-    try:
-        page = max(1, int(request.args.get('page', 1)))
-    except Exception:
-        page = 1
-    try:
-        per_page = min(200, max(5, int(request.args.get('per_page', 25))))
-    except Exception:
-        per_page = 25
 
     role_filter = (request.args.get('role') or '').strip()
     q = (request.args.get('q') or '').strip()
-    offset = (page - 1) * per_page
+    date_filter = (request.args.get('date') or '').strip()
+
 
     where_clauses = []
     params = []
@@ -649,31 +633,16 @@ def admin_users():
         likeq = f"%{q}%"
         params.extend([likeq, likeq])
 
+    if date_filter:
+        where_clauses.append("DATE(u.created_at) = %s")
+        params.append(date_filter)
+
+
     where_sql = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
 
     cursor = None
     try:
         conn, cursor = get_conn_and_cursor()
-        count_sql = f"SELECT COUNT(*) AS total FROM `user` u {where_sql};"
-        cursor.execute(count_sql, tuple(params))
-        total_row = cursor.fetchone()
-        total = total_row['total'] if total_row else 0
-
-        select_sql = f"""
-            SELECT u.id, u.name, u.matricula, u.role, u.created_at
-            FROM `user` u
-            {where_sql}
-            ORDER BY u.id DESC
-            LIMIT %s OFFSET %s;
-        """
-        params_with_limit = list(params) + [per_page, offset]
-        cursor.execute(select_sql, tuple(params_with_limit))
-        users = cursor.fetchall() or []
-    except Exception as e:
-        current_app.logger.exception("Error listando usuarios admin: %s", e)
-        users = []
-        total = 0
-    try:
         cursor.execute("""
             SELECT g.id AS id, g.nombre AS name
             FROM grupo g
@@ -716,39 +685,15 @@ def admin_users():
         except:
             pass
 
-    wants_json_via_param = (request.args.get('format') or '').lower() == 'json'
-    accept_header = (request.headers.get('Accept') or '')
-    wants_json_via_accept = 'application/json' in accept_header.lower()
 
-    current_app.logger.info("admin_users called: args=%s , Accept=%s , session_role=%s , wants_json_param=%s, wants_json_accept=%s",
-                            dict(request.args), accept_header, role_in_session, wants_json_via_param, wants_json_via_accept)
-
-    if wants_json_via_param or wants_json_via_accept:
-        return jsonify({
-            'users': users,
-            'pagination': {
-                'page': page,
-                'per_page': per_page,
-                'total': total,
-                'pages': (total + per_page - 1) // per_page
-            }
-        })
 
     return render_template(
         'admin/inicio-admin.html',
-        users=users,
-        page=page,
-        per_page=per_page,
-        total=total,
-        role_filter=role_filter,
-        q=q,
         grupos=grupos,
         materias=materias,
         docentes=docentes
     )
 
-
-# devuelve TODOS los usuarios en JSON (sin auth) ---
 @app.route('/admin/api/users-all', methods=['GET'])
 def admin_api_users_all():
     conn = None
