@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preguntas Frecuentes</title>
+    
+    <!-- link a los styles -->
+    <link href="../static/css/pages/index-style.css" rel="stylesheet">
+    <link href="../static/css/base.css" rel="stylesheet">
+    <link href="../static/css/components.css" rel="stylesheet">
+    <link href="../static/css/layout.css" rel="stylesheet">
+    <link href="../static/css/pages/freq-quest.css" rel="stylesheet">
+    
+
+
+
+    <link rel="icon" type="image/jpg" href="../static/css/img/teacher-icon.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Fugaz+One&family=Orbitron:wght@400..900&family=VT323&display=swap" rel="stylesheet">
+</head>
+<body>
+
+   <!-- Navigation -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}">
+            <div class="logo"><img src="../../static/css/img/admin-icon.png" width="40" height="60">
+            Evaluación Docente
+            </div>
+            </a>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}">Inicio</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <ul class="mobile-nav-links">
+            <li><a href="{{ url_for('index') }}">Inicio</a></li>
+        </ul>
+    </div>
+
+
+<section class="welcome-section">
+
+  <div class="welcome-textBox">
+    <h2 class="welcome-text">Preguntas Frecuentes</h2>
+  </div>
+
+  <div class="welcome-image">
+    <img src="../../static/css/img/admin-icon.png" class="avatar">
+  </div>
+</section>
+
+
+
+<section class="all-questions-section">
+
+  <div class="user-type-text">
+    <h2>Tipo de ususario: Admin</h2>
+  </div>
+
+  <div class="user-questions">
+    
+    <div class="question-card">
+      <label class="question" name="question"">¿Cómo edito la información de un usuario?</label>
+      <div class="answer">
+      La última columna de la tabla de usuarios registrados llamada "Acciones" contiene dos botones, uno para borrar el usuario y otro para editarlo, solo se debe dar click en el botón "Editar"
+        <div class="example-image">
+          <img src="../static/css/img/edit-user-button-example.png" class="example">
+        </div>
+      Llenar el formulario con los datos que desean ser cambiados, dejando los que se quedarán intactos sin llenar y presionar en el botón "Guardar"
+        <div class="example-image">
+          <img src="../static/css/img/edit-user-form-example.png" class="example">
+        </div>
+      Al terminar volverá al panel inicial acompañado de una notificación de "Usuario editado exitosamente."
+      <div class="example-image">
+          <img src="../static/css/img/user-edited-example.png" class="example">
+        </div>
+      Nota: EL TIPO DE USUARIO NO PUEDE EDITARSE UNA VEZ REGISTRADO.
+      </div>
+    </div>
+
+    <div class="question-card">
+      <label class="question" name="question"">¿Cómo elimino un usuario?</label>
+      <div class="answer">
+        En la última columna de la tabla de usuarios registrados llamada "Acciones" contiene dos botones, uno para borrar el usuario y otro para editarlo, solo se debe dar click en el botón "Borrar"
+        <div class="example-image">
+          <img src="../static/css/img/delete-user-button-example.png" class="example">
+        </div>
+        Y confirmar que desea eliminar el usuario en la notificación que aparecerá en la esquina derecha de la pantalla, oprimiendo en "Eliminar"
+        <div class="example-image">
+          <img src="../static/css/img/confirm-delete-example.png" class="example">
+        </div>
+        Así, volverá al panel inicial acompañado de una notificación de "Usuario editado exitosamente."
+        <div class="example-image">
+          <img src="../static/css/img/deleted-user-example.png" class="example">
+        </div>
+      </div>
+ </div>
+
+    <div class="question-card">
+      <label class="question" name="question"">¿Cómo agrego un nuevo usuario?</label>
+      <div class="answer">
+        Al final de la tabla de usuarios registrado podrá observar un botón llamado "Agregar usuario", solo hace falta hacer click sobre él
+        <div class="example-image">
+          <img src="../static/css/img/add-button-example.png" class="example">
+        </div>
+        A continuación debe llenar el formulario según el tipo de usuario y oprimir en el botón "Guardar".
+        <div class="example-image">
+          <img src="../static/css/img/add-user-form-example.png" class="example">
+        </div>
+        Una vez enviado, volverá al panel inicial acompañado de una notificación de "Usuario creado exitosamente."
+        <div class="example-image">
+          <img src="../static/css/img/succes-adding-example.png" class="example">
+        </div>
+      </div>
+  </div>
+
+  
+  <div class="question-card">
+      <label class="question" name="question"">¿Cómo descargo un archivo PDF con las respuestas registradas?</label>
+      <div class="answer">
+        Al final de todas las tablas, hay un botón "Descargar reporte de respuestas PDF", solo es necesario oprimirlo y esperar unos segundos para que se descargue automáticamente (su navegador podría requerirle permiso para hacerlo),
+        <div class="example-image">
+          <img src="../static/css/img/download-admin-example.png" class="example">
+        </div>
+      </div>
+    </div>
+
+</section>
+<!-- Footer -->
+  <footer class="footer">
+     <div class="container">
+      <div class="row">
+        <div class="footer-col">
+          <h4>Evaluación Docente</h4>
+          <ul>
+            <li><a href="{{ url_for('preguntas_freq') }}">Preguntas frecuentes</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Contáctanos</h4>
+          <ul>
+            <li><a href="mailto:evaluaciondocente@uaem.edu.mx">evaluaciondocente@uaem.edu.mx</a></li>
+            <li><a href="tel:+557770000000"> +55 (777) 000 0000 (Llamadas)</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Síguenos</h4>
+          <div class="social-links">
+            <a href="https://www.facebook.com/"><i class="fab fa-facebook-f"></i></a>
+            <a href="https://www.instagram.com/"><i class="fab fa-instagram"></i></a>
+          </div>
+        </div>
+      </div>
+     </div>
+  </footer>
+
+</body>
+</html>

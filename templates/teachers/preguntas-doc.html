@@ -29,7 +29,7 @@
     <nav id="navbar">
         <div class="nav-container">
             <a href="{{ url_for('index') }}">
-            <div class="logo"><img src="../../static/css/img/alumnx-icon.png" width="40" height="60">
+            <div class="logo"><img src="../../static/css/img/teacher-icon.png" width="40" height="60">
             Evaluación Docente
             </div>
             </a>
@@ -47,93 +47,57 @@
     </div>
 
 
-<!-- Sección de inicio / Bienvenida -->
+<section class="welcome-section">
 
-  <section id="users" class="users">
-    <p class="outlined-text">Preguntas Frecuentes</p>
-    <div class="users-grid">
+  <div class="welcome-textBox">
+    <h2 class="welcome-text">Preguntas Frecuentes</h2>
+  </div>
 
-        <div class="users-item">
-          <a href="/alumnxs/preguntas-al">
-            
-            <div class="users-image"></div>
-            <div class="users-content">
-              <h4>Alumnx</h4> 
-            </div>
-          </a>     
-        </div>
+  <div class="welcome-image">
+    <img src="../../static/css/img/teacher-icon.png" class="avatar">
+  </div>
+</section>
 
-        <div class="users-item">
-          <a href="/teachers/preguntas-doc">
-            <div class="users-image"></div>
-            <div class="users-content">
-              <h4>Docente</h4> 
-            </div>
-          </a>     
-        </div>
-
-        <div class="users-item">
-          <a href="/admin/preguntas-ad">
-            <div class="users-image"></div>
-            <div class="users-content">
-              <h4>Admin</h4> 
-            </div>
-          </a>     
-        </div>
-    </div>
-  </section>
 
 
 <section class="all-questions-section">
-    
+
   <div class="user-type-text">
-    <h2>Generales</h2>
+    <h2>Tipo de ususario: Docente</h2>
   </div>
 
   <div class="user-questions">
     
     <div class="question-card">
-      <label class="question" name="question"">¿Cómo inicio sesión?</label>
+      <label class="question" name="question"">¿Por qué no puedo observar mis gráficos resultados?</label>
       <div class="answer">
-        Es necesario seleccionar el tipo de ususario que eres desde la página de inicio
+        Es normal que los gráficos no aparecen recien iniciada sesión, es necesario filtrar los gráficos en orden de su aparición, hay dos filtros, el primero es para escoger si desea ver los gráficos de una Materia o Grupo.
         <div class="example-image">
-          <img src="../static/css/img/landing-example.png" class="example">
+          <img src="../static/css/img/first-filter-example.png" class="example">
         </div>
-        Ingresar tu matrícula y contraseña en el formulario
+        Y en el segundo filtro se selecciona la materia/grupo del que desea observar resultados.
         <div class="example-image">
-          <img src="../static/css/img/login-example.png" class="example">
+          <img src="../static/css/img/second-filter-example.png" class="example">
         </div>
-        Y automáticamente se te redirigirá a tu dashboard correspondiente.
+        Por último, debe oprimir el botón "Ver resultados" para que los gráficos sean desplegados correctamente.
         <div class="example-image">
-          <img src="../static/css/img/dashboard-example.png" class="example">
+          <img src="../static/css/img/view-results-example.png" class="example">
         </div>
       </div>
     </div>
 
     <div class="question-card">
-      <label class="question" name="question"">¿Cómo cierro sesión?</label>
+      <label class="question" name="question"">¿Cómo descargo un archivo PDF con mis gráficos relacionados?</label>
       <div class="answer">
-        Desde tu dashboard, podrás observar una opción en la esqeuina superior izquierda llamada "Cerrar sesión"
+        Al final de todos los gráficos resultantes después del filtro (o un espacio vacío en caso de no haber filtrado o falta de respuestas), hay un botón "Descargar reporte PDF", solo es necesario oprimirlo y esperar unos segundos para que se descargue automáticamente (su navegador podría requerirle permiso para hacerlo),
         <div class="example-image">
-          <img src="../static/css/img/logout-example.png" class="example">
+          <img src="../static/css/img/download-report-example.png" class="example">
         </div>
-        Al hacer click en ella tu sesión estará cerrada con seguridad y se te redirigirá a la página inicial del sistema.
       </div>
-  </div>
+    </div>
 
-   <div class="question-card">
-      <label class="question" name="question"">¿Cómo recupero mi contraseña?</label>
-      <div class="answer">
-        En el formulario que debe rellenar para iniciar sesión hay una pregunta "¿Olvidó su contraseña?"
-        <div class="example-image">
-          <img src="../static/css/img/forgot-password.png" class="example">
-        </div>
-        Al hacer click en "contraseña" se le redirigirá para el envío de un correo al Administrador solicitando un cambio de contraseña, solo debe indicar su martícula en el cuerpo del correo, se verá como:
-        <div class="example-image">
-          <img src="../static/css/img/getpsswback-example.png" class="example">
-        </div>
-      </div>
-  </div>
+
+
 
 </section>
 <!-- Footer -->

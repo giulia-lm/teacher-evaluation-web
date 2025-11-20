@@ -302,3 +302,11 @@ span.psw a:hover {
       transform: translateX(20px);
     }
   }
+
+  .error{
+    text-decoration: none;
+    font-family: "Tahoma", sans-serif;
+    font-size: 1rem;
+    font-weight: bolder;
+    color: var(--orange);
+  }

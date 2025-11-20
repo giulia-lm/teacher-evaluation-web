@@ -24,10 +24,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       data.forEach(r => {
         // campos en top-level: tratamos varias posibilidades
-        const responseId = r.response_id ?? r.id ?? '';
-        const formId = r.form_id ?? r.id_form ?? r.idForm ?? '';
+        //const responseId = r.response_id ?? r.id ?? '';
+        //const formId = r.form_id ?? r.id_form ?? r.idForm ?? '';
         const formTitle = r.form_title ?? r.title ?? r.formTitle ?? '';
-        const alumnxId = r.alumnx_id ?? r.id_alumnx ?? '';
+        //const alumnxId = r.alumnx_id ?? r.id_alumnx ?? '';
         const alumnxName = r.alumnx_name ?? r.name ?? '';
         const alumnxMat = r.alumnx_matricula ?? r.alumnx_matricula ?? '';
 
@@ -57,10 +57,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${escapeHtml(String(responseId))}</td>
-          <td>${escapeHtml(String(formId))}</td>
+
           <td>${escapeHtml(String(formTitle))}</td>
-          <td>${escapeHtml(String(alumnxId))}</td>
+
           <td>${escapeHtml(String(alumnxName))} ${alumnxMat ? `(${escapeHtml(alumnxMat)})` : ''}</td>
           <td>${escapeHtml(String(fecha))}</td>
           <td>${answersHtml}</td>

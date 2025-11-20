@@ -226,7 +226,7 @@ th {
 
 
 
-.btn-edit{
+.btn-edit, .btn-materia-edit{
   font-family: "Fugaz One", sans-serif;
   background: var(--yellow);
   color: var(--brown);
@@ -241,14 +241,14 @@ th {
   transition: all 0.25s ease;
 }
 
-.btn-edit:hover{
+.btn-edit:hover, .btn-materia-edit:hover{
   background: var(--yellow);
   color: var(--orange);
   box-shadow: 0 6px 16px rgba(14, 165, 164, 0.35);
   transform: scale(1.05);
 }
 
-.btn-delete{
+.btn-delete, .btn-materia-delete{
   font-family: "Fugaz One", sans-serif;
   background: var(--orange);
   color: var(--brown);
@@ -263,7 +263,7 @@ th {
   transition: all 0.25s ease;
 }
 
-.btn-delete:hover{
+.btn-delete:hover, .btn-materia-delete:hover{
   background: var(--orange);
   color: var(--yellow);
   box-shadow: 0 6px 16px rgba(14, 165, 164, 0.35);

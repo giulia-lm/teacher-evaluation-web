@@ -1273,6 +1273,8 @@ def admin_api_user_delete():
         try:
             if conn: conn.close()
         except: pass
+
+
 @app.route('/admin/api/materia-create', methods=['POST'])
 def admin_api_materia_create():
     if not is_admin_session():
@@ -1362,6 +1364,101 @@ def admin_api_materia_create():
         if cursor: cursor.close()
         if conn: conn.close()
 
+@app.route('/admin/api/materia-delete', methods=['POST'])
+def admin_api_materia_delete():
+    if not is_admin_session():
+        return jsonify({'error': 'Prohibido'}), 403
+    data = request.get_json() or {}
+    uid = data.get('id')
+
+    if not uid:
+        return jsonify({'error': 'Falta de id.'}), 400
+    conn = cursor = None
+    try:
+        conn, cursor = get_conn_and_cursor()
+
+        cursor.execute("DELETE FROM materia WHERE id = %s", (uid,))
+
+        conn.commit()
+        flash("Materia eliminado correctamente")
+        return jsonify({'ok': True, 'deleted_id': uid})
+    except Exception as e:
+        current_app.logger.exception("Error borrando materia: %s", e)
+        return jsonify({'error': 'Error borrando materia', 'details': str(e)}), 500
+    finally:
+        try:
+            if cursor: cursor.close()
+        except: pass
+        try:
+            if conn: conn.close()
+        except: pass
+
+
+@app.route('/admin/api/materia-update', methods=['POST'])
+def admin_api_materia_update():
+    if not is_admin_session():
+        return jsonify({'error': 'Prohibido.'}), 403
+    
+    data = request.get_json() or {}
+    uid = data.get('id')
+    
+    if not uid:
+        return jsonify({'error': 'Falta id'}), 400
+    
+    name = (data.get('name') or '').strip()
+    id_docente = data.get('docente')
+    id_grupo = data.get('grupo')    
+
+    conn = cursor = None
+    try:
+        conn, cursor = get_conn_and_cursor()
+        if name:
+            cursor.execute("UPDATE materia SET name = %s WHERE id = %s", (name, uid))
+        
+        cursor.execute("DELETE FROM docente_materia WHERE id_materia = %s", (uid, ))
+        if id_docente:
+            cursor.execute("INSERT INTO docente_materia (id_materia, id_docente) VALUES (%s, %s)", (uid, id_docente))
+        
+        cursor.execute("DELETE FROM materia_grupo WHERE id_materia = %s", (uid,))
+        if id_grupo:
+            cursor.execute("INSERT INTO materia_grupo (id_materia, id_grupo) VALUES (%s, %s)", (uid, id_grupo))
+
+        conn.commit()
+        cursor.execute("SELECT id, name FROM materia WHERE id = %s", (uid,))
+        materia = cursor.fetchone()
+
+        cursor.execute("SELECT id_docente FROM docente_materia WHERE id_materia = %s", (uid,))
+        docente_row = cursor.fetchone()
+        materia_docente = docente_row['id_docente'] if docente_row else None
+
+
+        cursor.execute("SELECT id_grupo FROM materia_grupo WHERE id_materia = %s", (uid,))
+        grupo_row = cursor.fetchone()
+        materia_grupo = grupo_row['id_grupo'] if grupo_row else None
+
+
+        flash("Materia editada correctamente")
+
+        return jsonify({
+            'ok': True,
+            'materia': {
+                'id': materia['id'],
+                'name': materia['name'],
+                'id_docente': materia_docente,
+                'id_grupo': materia_grupo
+            }
+        })
+    
+    except Exception as e:
+        current_app.logger.exception("Error actualizando materia admin: %s", e)
+        return jsonify({'error': 'Error actualizando materia', 'details': str(e)}), 500
+    finally:
+        try:
+            if cursor: cursor.close()
+        except: pass
+        try:
+            if conn: conn.close()
+        except: pass
 
 if __name__ == '__main__':
     app.run(debug=True)

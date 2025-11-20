@@ -64,12 +64,17 @@
         <input type="hidden" name="role" value="alumnx">
 
         <button type="submit" class="login-button">Entrar</button>
-        <span class="psw">¿Olvidó su <a href="#">contraseña</a>?</span>
+        <span class="psw">
+          ¿Olvidó su
+          <a href="mailto:evaluaciondocente@uaem.edu.mx?subject=Recuperación%20de%20contraseña&body=Hola,%0D%0AQuiero%20recuperar%20mi%20contraseña.%20Mi%20número%20de%20matrícula%20es:%20_____%0D%0AGracias.">
+            contraseña
+          </a>?
+        </span>
       </div>
     </form>
 
     {% if error %}
-      <p style="color:red;">{{ error }}</p>
+      <p class="error">{{ error }}</p>
     {% endif %}
   </div>
 
