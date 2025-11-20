@@ -1,12 +1,20 @@
 document.addEventListener('DOMContentLoaded', () => {
   const tableBody = document.querySelector('#users-table tbody');
 
-  // modal elements
+  // modal elements (si usas modal)
   const modal = document.getElementById('user-modal');
   const modalTitle = document.getElementById('modal-title');
   const form = document.getElementById('user-form');
   const btnOpenAdd = document.getElementById('btn-open-add');
   const btnCancel = document.getElementById('user-cancel');
+
+  // filtros y botones (asegúrate que existen en el HTML)
+  const filtroRol = document.getElementById('filtro-rol');
+  const filtroCreado = document.getElementById('filtro-creado');
+  const btnFiltrar = document.getElementById('btn-filtrar-users');
+  const btnReset = document.getElementById('btn-reset-users');
+  
+
 
   function showToast(msg) {
     const container = document.getElementById("toast-container");
@@ -193,9 +201,17 @@ function showModal(mode='create', user={}) {
     
     try {
       
-      //const resp = await fetch('/admin/api/users-all?' + params.toString());
-      
-      const resp = await fetch('/admin/api/users-all', { credentials: 'same-origin' });
+      const params = new URLSearchParams();
+
+      const roleVal = (filtroRol && filtroRol.value) || '';
+      const dateVal = (filtroCreado && filtroCreado.value) || ''; // formato "YYYY-MM"
+
+      if (roleVal) params.set('role', roleVal);
+      if (dateVal) params.set('date', dateVal);
+
+
+      const url = '/admin/api/users-all' + (params.toString() ? ('?' + params.toString()) : '');
+      const resp = await fetch(url, { credentials: 'same-origin' });
 
       if (!resp.ok) {
         const txt = await resp.text();
@@ -214,18 +230,22 @@ function showModal(mode='create', user={}) {
       users.forEach(u => {
         const tr = document.createElement('tr');
 
-        // --- Convertir la fecha a español ---
+        // fecha en español
         let fecha = "";
         if (u.created_at) {
-          const date = new Date(u.created_at);
-          fecha = date.toLocaleString("es-MX", {
-            timeZone: "America/Mexico_City",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
-          });
+          const d = new Date(u.created_at);
+          if (!isNaN(d)) {
+            fecha = d.toLocaleString("es-MX", {
+              timeZone: "America/Mexico_City",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit"
+            });
+          } else {
+            fecha = u.created_at;
+          }
         }
         // -------------------------------------
         const acciones = u.role === 'admin'
@@ -272,33 +292,40 @@ function showModal(mode='create', user={}) {
     }
   }
 
+  // Event listeners para filtros
+  if (btnFiltrar) {
+    btnFiltrar.addEventListener('click', (e) => {
+      e.preventDefault();
+      loadAllUsers();
+    });
+  } else {
+    console.warn('btnFiltrar no encontrado en DOM');
+  }
+
+  if (btnReset) {
+    btnReset.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (filtroRol) filtroRol.value = '';
+      if (filtroCreado) filtroCreado.value = '';
+      loadAllUsers();
+    });
+  } else {
+    console.warn('btnReset no encontrado en DOM');
+  }
+
+  // modal open/close si existen botones
+  if (btnOpenAdd && modal) {
+    btnOpenAdd.addEventListener('click', () => modal.classList.add('show'));
+  }
+  if (btnCancel && modal) {
+    btnCancel.addEventListener('click', () => modal.classList.remove('show'));
+  }
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.classList.remove('show');
+    });
+  }
+
+  // primera carga
   loadAllUsers();
-  document.addEventListener('DOMContentLoaded', () => {
-  const modal = document.getElementById('user-modal');
-  const openBtn = document.getElementById('btn-open-add');
-  const cancelBtn = document.getElementById('user-cancel');
-
-  openBtn.addEventListener('click', () => {
-    modal.classList.add('show');
-  });
-
-  cancelBtn.addEventListener('click', () => {
-    modal.classList.remove('show');
-  });
-
-  // Cierra el modal al hacer clic fuera del contenido
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) modal.classList.remove('show');
-  });
-  
-  /*document.getElementById('btn-filtrar-users').addEventListener('click', loadAllUsers);
-  document.getElementById('btn-reset-users').addEventListener('click', () => {
-  document.getElementById('filtro-rol').value = '';
-  document.getElementById('filtro-creado').value = '';
-  loadAllUsers();
-});*/
-
-
-});
-
 });

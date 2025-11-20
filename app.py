@@ -28,6 +28,9 @@ from io import BytesIO
 from reportlab.platypus import Paragraph
 from reportlab.lib.styles import ParagraphStyle
 
+import calendar
+from datetime import datetime
+
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.secret_key = "8so138bs28d32s4wz3872s8ou6oqwo74368o283"
 
@@ -612,35 +615,6 @@ def alias_admin_inicio():
 @app.route('/admin/inicio', methods=['GET'])
 @require_role("admin")
 def admin_users():
-    conn = None
-    cursor = None
-
-
-    role_filter = (request.args.get('role') or '').strip()
-    q = (request.args.get('q') or '').strip()
-    date_filter = (request.args.get('date') or '').strip()
-
-
-    where_clauses = []
-    params = []
-
-    if role_filter:
-        where_clauses.append("u.role = %s")
-        params.append(role_filter)
-
-    if q:
-        where_clauses.append("(u.name LIKE %s OR u.matricula LIKE %s)")
-        likeq = f"%{q}%"
-        params.extend([likeq, likeq])
-
-    if date_filter:
-        where_clauses.append("DATE(u.created_at) = %s")
-        params.append(date_filter)
-
-
-    where_sql = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
-
-    cursor = None
     try:
         conn, cursor = get_conn_and_cursor()
         cursor.execute("""
@@ -700,12 +674,70 @@ def admin_api_users_all():
     cursor = None
     try:
         conn, cursor = get_conn_and_cursor()
-        cursor.execute("SELECT id, name, matricula, role, created_at FROM `user` ORDER BY id DESC;")
+
+        role_filter = (request.args.get('role') or '').strip()
+        q = (request.args.get('q') or '').strip()
+        date_filter = (request.args.get('date') or '').strip()  # aceptamos YYYY-MM o YYYY-MM-DD
+
+        where = []
+        params = []
+
+        if role_filter:
+            where.append("u.role = %s")
+            params.append(role_filter)
+
+        if q:
+            where.append("(u.name LIKE %s OR u.matricula LIKE %s)")
+            like = f"%{q}%"
+            params += [like, like]
+
+        # Debug: log lo que llega del frontend
+        current_app.logger.debug("admin_api_users_all - date_filter raw: '%s'", date_filter)
+
+        # Si date_filter viene en formato YYYY-MM -> construir rango desde primer día hasta último día
+        if date_filter:
+            # YYYY-MM
+            if len(date_filter) == 7 and date_filter[4] == '-':
+                try:
+                    year = int(date_filter[0:4])
+                    month = int(date_filter[5:7])
+                    first_day = datetime(year, month, 1).date()
+                    last_day_num = calendar.monthrange(year, month)[1]
+                    last_day = datetime(year, month, last_day_num).date()
+                    # filtramos por rango (incluye toda la hora del último día)
+                    where.append("u.created_at BETWEEN %s AND %s")
+                    params.append(first_day.strftime("%Y-%m-%d") + " 00:00:00")
+                    params.append(last_day.strftime("%Y-%m-%d") + " 23:59:59")
+                    current_app.logger.debug("admin_api_users_all - date range: %s to %s", params[-2], params[-1])
+                except Exception as ex:
+                    current_app.logger.exception("admin_api_users_all - invalid YYYY-MM parsing: %s", ex)
+                    return jsonify({"error": "invalid_date_format", "details": "date must be YYYY-MM or YYYY-MM-DD"}), 400
+            # YYYY-MM-DD
+            elif len(date_filter) == 10 and date_filter[4] == '-' and date_filter[7] == '-':
+                where.append("DATE(u.created_at) = %s")
+                params.append(date_filter)
+                current_app.logger.debug("admin_api_users_all - exact date filter: %s", date_filter)
+            else:
+                return jsonify({"error": "invalid_date_format", "details": "date must be YYYY-MM or YYYY-MM-DD"}), 400
+
+        where_sql = "WHERE " + " AND ".join(where) if where else ""
+
+        sql = f"""
+            SELECT u.id, u.name, u.matricula, u.role, u.created_at
+            FROM `user` u
+            {where_sql}
+            ORDER BY u.id DESC;
+        """
+        current_app.logger.debug("admin_api_users_all - SQL: %s -- params: %s", sql, params)
+
+        cursor.execute(sql, tuple(params))
         users = cursor.fetchall() or []
+
         return jsonify(users)
+
     except Exception as e:
         current_app.logger.exception("Error en admin_api_users_all: %s", e)
-        return jsonify({'error': 'Error al cargar los usuarios.', 'details': str(e)}), 500
+        return jsonify({"error": "Error al filtrar", "details": str(e)}), 500
     finally:
         try:
             if cursor:
