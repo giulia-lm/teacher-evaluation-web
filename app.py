@@ -756,7 +756,37 @@ def admin_api_materias():
     cursor = None
     try:
         conn, cursor = get_conn_and_cursor()
-        cursor.execute("""
+        grupo_filter = (request.args.get('grupo') or '').strip()
+        docente_filter = (request.args.get('docente') or '').strip()
+
+        where = []
+        params = []
+
+        # Si los selects envían IDs, usamos las columnas de las tablas relacionales (más fiables)
+        if grupo_filter:
+            # Intentar parsear como entero (id). Si no es entero, asumimos que es nombre y filtramos por g.nombre
+            try:
+                gid = int(grupo_filter)
+                where.append("mg.id_grupo = %s")
+                params.append(gid)
+            except ValueError:
+                # filtro por nombre del grupo
+                where.append("g.nombre = %s")
+                params.append(grupo_filter)
+
+        if docente_filter:
+            try:
+                did = int(docente_filter)
+                where.append("dm.id_docente = %s")
+                params.append(did)
+            except ValueError:
+                # filtro por nombre del docente
+                where.append("d.name = %s")
+                params.append(docente_filter)
+
+        where_sql = "WHERE " + " AND ".join(where) if where else ""
+
+        sql = f"""
             SELECT
                 m.id AS materia_id,
                 m.name AS materia_name,
@@ -770,9 +800,14 @@ def admin_api_materias():
             LEFT JOIN `user` d ON d.id = dm.id_docente
             LEFT JOIN materia_grupo mg ON mg.id_materia = m.id
             LEFT JOIN grupo g ON g.id = mg.id_grupo
+            {where_sql}
             ORDER BY m.id;
-        """)
+        """
+
+        current_app.logger.debug("admin_api_materias - SQL: %s -- params: %s", sql, params)
+        cursor.execute(sql, tuple(params))
         rows = cursor.fetchall() or []
+
     except Exception as e:
         current_app.logger.exception("Error en admin_api_materias: %s", e)
         return jsonify({'error': 'Error al cargar las materias', 'details': str(e)}), 500
@@ -809,7 +844,7 @@ def admin_api_materias():
                 })
         gid = r.get('grupo_id')
         if gid:
-            if not any(g['id'] == gid for g in materias_map[mid]['grupos']):
+            if not any(gx['id'] == gid for gx in materias_map[mid]['grupos']):
                 materias_map[mid]['grupos'].append({
                     'id': gid,
                     'nombre': r.get('grupo_nombre')

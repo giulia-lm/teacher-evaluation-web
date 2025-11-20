@@ -10,6 +10,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnOpenAdd = document.getElementById('btn-add-materia');
   const btnCancel = document.getElementById('materia-cancel');
 
+  const filtroGrupo = document.getElementById('filtro-grupo');
+  const filtroDocente = document.getElementById('filtro-docente');
+  const btnFiltrar = document.getElementById('btn-filtrar-materias');
+  const btnReset = document.getElementById('btn-reset-materias');
+
 
   function showToast(msg) {
     const container = document.getElementById("toast-container");
@@ -146,7 +151,20 @@ function showModalMateria(mode='create', materia={}) {
 
   async function loadMaterias() {
     try {
-      const resp = await fetch('/admin/api/materias', { credentials: 'same-origin' });
+
+      const params = new URLSearchParams();
+
+      const grupoVal = (filtroGrupo && filtroGrupo.value) || '';
+      const docenteVal = (filtroDocente && filtroDocente.value) || ''; 
+
+      if (grupoVal) params.set('grupo', grupoVal);
+      if (docenteVal) params.set('docente', docenteVal);
+
+
+      const url = '/admin/api/materias' + (params.toString() ? ('?' + params.toString()) : '');
+      const resp = await fetch(url, { credentials: 'same-origin' });
+
+
       if (!resp.ok) {
         const txt = await resp.text();
         console.error('Respuesta /admin/api/respuestas fallo:', resp.status, txt);
@@ -205,6 +223,28 @@ function showModalMateria(mode='create', materia={}) {
       tbody.innerHTML = `<tr><td colspan="4">Error al conectar</td></tr>`;
     }
   }
+
+if (btnFiltrar) {
+    btnFiltrar.addEventListener('click', (e) => {
+      e.preventDefault();
+      loadMaterias();
+    });
+  } else {
+    console.warn('btnFiltrar (materias) no encontrado en DOM');
+  }
+
+  if (btnReset) {
+    btnReset.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (filtroGrupo) filtroGrupo.value = '';
+      if (filtroDocente) filtroDocente.value = '';
+      loadMaterias();
+    });
+  } else {
+    console.warn('btnReset (materias) no encontrado en DOM');
+  }
+
+
 
   loadMaterias();
 });

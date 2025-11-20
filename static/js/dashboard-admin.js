@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnOpenAdd = document.getElementById('btn-open-add');
   const btnCancel = document.getElementById('user-cancel');
 
-  // filtros y botones (asegúrate que existen en el HTML)
+  // filtros y botones
   const filtroRol = document.getElementById('filtro-rol');
   const filtroCreado = document.getElementById('filtro-creado');
   const btnFiltrar = document.getElementById('btn-filtrar-users');
