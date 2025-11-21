@@ -646,6 +646,27 @@ def admin_users():
         docentes = cursor.fetchall() or []
     except Exception as e:
         current_app.logger.exception("Error listando docentes: ", e)
+    
+    try:
+        cursor.execute("""
+            SELECT f.id AS id, f.title AS name
+            FROM form f
+            ORDER BY f.id;
+        """)
+        forms = cursor.fetchall() or []
+    except Exception as e:
+        current_app.logger.exception("Error listando formularios: ", e)
+    
+    try:
+        cursor.execute("""
+            SELECT a.id AS id, a.name AS name
+            FROM user a
+            WHERE role = 'alumnx'
+            ORDER BY a.id;
+        """)
+        alumnxs = cursor.fetchall() or []
+    except Exception as e:
+        current_app.logger.exception("Error listando alumnxs: ", e)
 
     finally:
         try:
@@ -665,7 +686,9 @@ def admin_users():
         'admin/inicio-admin.html',
         grupos=grupos,
         materias=materias,
-        docentes=docentes
+        docentes=docentes,
+        forms=forms,
+        alumnxs=alumnxs
     )
 
 @app.route('/admin/api/users-all', methods=['GET'])
@@ -852,6 +875,8 @@ def admin_api_materias():
     materias = [materias_map[k] for k in sorted(materias_map.keys())]
     return jsonify(materias)
 
+import calendar
+from datetime import datetime
 
 @app.route('/admin/api/respuestas', methods=['GET'])
 def admin_api_respuestas():
@@ -860,8 +885,9 @@ def admin_api_respuestas():
     filtros = []
     params = []
 
-    form_id = request.args.get('form_id')
-    alumnx_id = request.args.get('alumnx_id')
+    form_id = (request.args.get('form') or '').strip()
+    alumnx_id = (request.args.get('alumnx') or '').strip()
+    date_filter = (request.args.get('date') or '').strip()
 
     try:
         if form_id:
@@ -872,8 +898,35 @@ def admin_api_respuestas():
             alumnx_id_int = int(alumnx_id)
             filtros.append("r.id_alumnx = %s")
             params.append(alumnx_id_int)
+
+        # Fecha: interpretamos YYYY-MM (mes) o YYYY-MM-DD (día exacto)
+        if date_filter:
+            current_app.logger.debug("admin_api_respuestas - date_filter raw: '%s'", date_filter)
+            # YYYY-MM
+            if len(date_filter) == 7 and date_filter[4] == '-':
+                try:
+                    year = int(date_filter[0:4])
+                    month = int(date_filter[5:7])
+                    first_day = datetime(year, month, 1).date()
+                    last_day_num = calendar.monthrange(year, month)[1]
+                    last_day = datetime(year, month, last_day_num).date()
+                    filtros.append("r.submitted_at BETWEEN %s AND %s")
+                    params.append(first_day.strftime("%Y-%m-%d") + " 00:00:00")
+                    params.append(last_day.strftime("%Y-%m-%d") + " 23:59:59")
+                    current_app.logger.debug("admin_api_respuestas - date range: %s to %s", params[-2], params[-1])
+                except Exception as ex:
+                    current_app.logger.exception("admin_api_respuestas - invalid YYYY-MM parsing: %s", ex)
+                    return jsonify({"error": "invalid_date_format", "details": "date must be YYYY-MM or YYYY-MM-DD"}), 400
+            # YYYY-MM-DD
+            elif len(date_filter) == 10 and date_filter[4] == '-' and date_filter[7] == '-':
+                filtros.append("DATE(r.submitted_at) = %s")
+                params.append(date_filter)
+                current_app.logger.debug("admin_api_respuestas - exact date filter: %s", date_filter)
+            else:
+                return jsonify({"error": "invalid_date_format", "details": "date must be YYYY-MM or YYYY-MM-DD"}), 400
+
     except ValueError:
-        return jsonify({'error': 'Valor de filtro inválido.', 'details': 'form_id y alumnx_id deben ser enteros'}), 400
+        return jsonify({'error': 'Valor de filtro inválido.', 'details': 'form and alumnx must be integers'}), 400
 
     where_sql = ("WHERE " + " AND ".join(filtros)) if filtros else ""
 
@@ -904,6 +957,7 @@ def admin_api_respuestas():
             {where_sql}
             ORDER BY r.id DESC, a.id ASC;
         """
+        current_app.logger.debug("admin_api_respuestas - SQL: %s -- params: %s", sql, params)
         cursor.execute(sql, tuple(params))
         rows = cursor.fetchall() or []
     except Exception as e:
@@ -925,6 +979,7 @@ def admin_api_respuestas():
         except:
             pass
 
+    # procesar rows igual que antes...
     responses_map = {}
     for r in rows:
         rid = r['response_id']
