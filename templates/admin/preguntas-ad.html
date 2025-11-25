@@ -34,7 +34,7 @@
             </div>
             </a>
             <ul class="nav-links">
-                <li><a href="{{ url_for('index') }}">Inicio</a></li>
+                <li><a href="{{ url_for('go_back_2') }}">Regresar</a></li>
             </ul>
         </div>
     </nav>
@@ -42,7 +42,7 @@
     <!-- Mobile Menu -->
     <div class="mobile-menu" id="mobileMenu">
         <ul class="mobile-nav-links">
-            <li><a href="{{ url_for('index') }}">Inicio</a></li>
+            <li><a href="{{ url_for('go_back_2') }}">Regresar</a></li>
         </ul>
     </div>
 
@@ -135,29 +135,28 @@
     </div>
 
 </section>
+
 <!-- Footer -->
   <footer class="footer">
      <div class="container">
       <div class="row">
         <div class="footer-col">
-          <h4>Evaluación Docente</h4>
-          <ul>
-            <li><a href="{{ url_for('preguntas_freq') }}">Preguntas frecuentes</a></li>
-          </ul>
-        </div>
-        <div class="footer-col">
           <h4>Contáctanos</h4>
           <ul>
-            <li><a href="mailto:evaluaciondocente@uaem.edu.mx">evaluaciondocente@uaem.edu.mx</a></li>
-            <li><a href="tel:+557770000000"> +55 (777) 000 0000 (Llamadas)</a></li>
+            <li><a href="mailto:evaluaciondocente@uaem.edu.mx" target="_blank" rel="noopener noreferrer">evaluaciondocente@uaem.edu.mx</a></li>
+            <li><a href="tel:7770000000" target="_blank" rel="noopener noreferrer"> (777) 000 0000 (Llamadas)</a></li>
           </ul>
         </div>
 
         <div class="footer-col">
           <h4>Síguenos</h4>
           <div class="social-links">
-            <a href="https://www.facebook.com/"><i class="fab fa-facebook-f"></i></a>
-            <a href="https://www.instagram.com/"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer">
+              <img src="../../../static/css/img/fb-icon.png" alt="Facebook">
+            </a>
+            <a href="https://www.instagram.com/"target="_blank" rel="noopener noreferrer">
+              <img src="../../../static/css/img/ig-icon.png" alt="Instagram">
+            </a>
           </div>
         </div>
       </div>

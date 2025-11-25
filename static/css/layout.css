@@ -214,23 +214,34 @@ ul{
   padding-left: 8px;
 }
 
-.footer-col .social-links a{
-  display: inline-block;
+.footer-col .social-links a {
+  display: inline-flex;     
+  justify-content: center;
+  align-items: center;
   height: 40px;
   width: 40px;
   background-color: var(--orange);
-  margin:0 10px 10px 0;
-  text-align: center;
-  line-height: 40px;
+  margin: 0 10px 10px 0;
   border-radius: 50%;
   color: var(--brown);
-  transition: all 0.5s ease;
+  transition: all 0.25s ease;
+  vertical-align: middle;    
+  text-decoration: none;
+  overflow: hidden;         
 }
 
-.footer-col .social-links a:hover{
-  color: var(--orange);
-  background-color: var(--brown);
+.footer-col .social-links a img {
+  display: block;           
+  width: 60%; 
+  height: 60%;
+  object-fit: contain; 
 }
+
+
+.footer-col .social-links a:hover{
+  background-color: var(--yellow);
+}
+
 
 /*responsive footer*/
 @media(max-width: 767px){

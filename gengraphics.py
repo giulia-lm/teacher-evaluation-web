@@ -3,6 +3,7 @@ from collections import Counter
 import io
 import base64
 from matplotlib.backends.backend_pdf import PdfPages  
+from datetime import datetime as dt
 
 def group(data):
     group_data={}
@@ -116,7 +117,17 @@ def figs_to_pdf(figures, pdf_title="teacher_metrics.pdf", doc_title="Reporte de 
 
         fig_portada.text(
             0.5, 0.45,
-            "Reporte generado automáticamente",
+            "Evaluación Docente",
+            ha='center', va='center',
+            fontsize=14
+        )
+
+        now = dt.now()
+        fecha = f'{now.day}/{now.month}/{now.year}. Hora: {now.hour}:{now.minute}'
+
+        fig_portada.text(
+            0.5, 0.25,
+            f'Fecha de generación: {fecha}',
             ha='center', va='center',
             fontsize=14
         )

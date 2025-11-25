@@ -29,7 +29,7 @@ from reportlab.platypus import Paragraph
 from reportlab.lib.styles import ParagraphStyle
 
 import calendar
-from datetime import datetime
+
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.secret_key = "8so138bs28d32s4wz3872s8ou6oqwo74368o283"
@@ -199,6 +199,109 @@ def require_role(role):
 def logout():
     session.clear() 
     return redirect(url_for('index')) 
+
+# =========================
+# Guardar historial en session (solo GETs, evita static y POST)
+# =========================
+@app.after_request
+def save_history(response):
+    try:
+        # Guardar solo GET
+        if request.method != 'GET':
+            return response
+
+        # Ignorar archivos estáticos
+        if request.path.startswith("/static/"):
+            return response
+
+        # Ignorar APIs
+        if request.path.startswith("/admin/api/") or request.path.startswith("/api/"):
+            return response
+
+        # Solo guardar respuestas 200
+        if not (200 <= response.status_code < 300):
+            return response
+
+        clean_url = request.full_path.rstrip('?') or request.path
+
+        entry = {
+            "url": clean_url,
+            "endpoint": request.endpoint,     # puede ser None
+            "view_args": request.view_args or {},
+        }
+
+        history = session.get("history", [])
+
+        # Evitar duplicados exactos seguidos
+        if history and history[-1].get("url") == entry["url"]:
+            return response
+
+        history.append(entry)
+        session["history"] = history[-10:]
+
+    except Exception:
+        pass
+
+    return response
+
+
+# =========================
+# Función para obtener URL anterior válida
+# =========================
+def previous_url():
+    history = session.get("history", [])
+
+    if len(history) < 2:
+        # no hay anterior → fallback por rol
+        role = session.get("role") or session.get("user_role")
+        if role == "admin":
+            return url_for("admin_users")
+        if role == "docente":
+            return url_for("inicio_docente")
+        if role == "alumnx":
+            return url_for("inicio_alumn")
+        return url_for("index")
+
+    # El último es la página actual
+    # El penúltimo es la página anterior real
+    previous = history[-2]
+
+    # Si puedo reconstruir con endpoint → mejor
+    ep = previous.get("endpoint")
+    args = previous.get("view_args") or {}
+    if ep:
+        try:
+            return url_for(ep, **args)
+        except:
+            pass
+
+    # Si no, uso la URL cruda
+    return previous.get("url") or url_for("index")
+
+
+# =========================
+# Exponer la función a Jinja templates
+# =========================
+@app.context_processor
+def inject_previous_url():
+    return dict(previous_url=previous_url)
+
+@app.route("/go-back")
+def go_back():
+    return redirect(previous_url())
+
+@app.route('/go-back-2')
+def go_back_2():
+    history = session.get('history', [])
+    
+    if len(history) < 3:
+        return redirect(previous_url())   # fallback
+    
+    # -1  = actual
+    # -2  = anterior
+    # -3  = dos pasos atrás
+    prev2 = history[-3]
+    return redirect(prev2['url'])
 
 
 # Función consulta la base de datos para ver qué encuestas están activas y cuáles ya contestó el alumno
@@ -874,9 +977,6 @@ def admin_api_materias():
                 })
     materias = [materias_map[k] for k in sorted(materias_map.keys())]
     return jsonify(materias)
-
-import calendar
-from datetime import datetime
 
 @app.route('/admin/api/respuestas', methods=['GET'])
 def admin_api_respuestas():
