@@ -1,3 +1,5 @@
+
+
 document.addEventListener('DOMContentLoaded', () => {
   const tableBody = document.querySelector('#users-table tbody');
 
@@ -200,6 +202,7 @@ function showModal(mode='create', user={}) {
   async function loadAllUsers() {
     
     try {
+
       
       const params = new URLSearchParams();
 

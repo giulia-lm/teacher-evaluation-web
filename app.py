@@ -1,5 +1,7 @@
 # app.py (versión corregida)
 from flask import Flask, render_template, request, redirect, url_for, session, abort, jsonify, flash, current_app
+from functools import wraps
+from flask import session, redirect, url_for, current_app, request, g
 from flask import send_file
 import math
 from functools import wraps
@@ -13,10 +15,13 @@ import numpy as np
 import re
 from gengraphics import generate_graphics, figs_to_pdf
 from datetime import datetime as dt
-
+from flask import render_template, jsonify
+from werkzeug.exceptions import HTTPException
+import mysql.connector
+from mysql.connector import errors as mysql_errors
 import mysql.connector
 from mysql.connector import Error
-
+from uuid import uuid4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
@@ -27,12 +32,20 @@ from reportlab.pdfgen import canvas
 from io import BytesIO
 from reportlab.platypus import Paragraph
 from reportlab.lib.styles import ParagraphStyle
-
+from datetime import timedelta
 import calendar
 
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
-app.secret_key = "8so138bs28d32s4wz3872s8ou6oqwo74368o283"
+app.secret_key = os.environ.get('SECRET_KEY') or "8so138bs28d32s4wz3872s8ou6oqwo74368o283"
+
+app.config.update({
+    'SESSION_COOKIE_SECURE': os.environ.get('FLASK_ENV') == 'production',
+    'SESSION_COOKIE_HTTPONLY': True,
+    'SESSION_COOKIE_SAMESITE': 'Lax',
+    'PERMANENT_SESSION_LIFETIME': timedelta(days=7),
+})
+
 
 # --- Configuración de la BD (centralizada) ---
 DB_CONFIG = {
@@ -43,27 +56,18 @@ DB_CONFIG = {
     # opcionalmente add: 'pool_name': 'mypool', 'pool_size': 3
 }
 
+app.config.update({
+    'SESSION_COOKIE_SECURE': True,         # cookie solo via HTTPS
+    'SESSION_COOKIE_HTTPONLY': True,       # no accesible via JS
+    'SESSION_COOKIE_SAMESITE': 'Lax',     # o 'Strict' según UX
+    'PERMANENT_SESSION_LIFETIME': timedelta(days=7),  # duración sesión
+})
 # inicializamos la conexión (la función connect_db la recreará si se pierde)
 def connect_db():
     return mysql.connector.connect(**DB_CONFIG)
 
 db = connect_db()
-"""
-def get_cursor(buffered=True, dictionary=True):
-    global db
-    try:
-        # intenta hacer ping y reconectar automáticamente si fue necesario
-        # mysql-connector soporta ping(reconnect=True)
-        db.ping(reconnect=True, attempts=3, delay=1)
-    except Exception as e:
-        current_app.logger.warning("DB ping falló, reconectando: %s", e)
-        try:
-            db = connect_db()
-        except Exception as e2:
-            current_app.logger.exception("No se pudo reconectar a la BD: %s", e2)
-            raise
-    return db.cursor(buffered=buffered, dictionary=dictionary)
-"""
+
 
 def get_conn_and_cursor(buffered=True, dictionary=True):
     """
@@ -88,6 +92,53 @@ def get_conn_and_cursor(buffered=True, dictionary=True):
         raise
 
 
+def require_role(*allowed_roles):
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            user_id = session.get('user_id')
+            if not user_id:
+                return redirect(url_for('login', next=request.path))
+
+            # normalizar role
+            session_role = (session.get('role') or '').strip().lower()
+            if allowed_roles and session_role not in [r.lower() for r in allowed_roles]:
+                current_app.logger.warning("Acceso denegado por role: path=%s role=%s user=%s", request.path, session_role, user_id)
+                session.clear()
+                return "Acceso denegado", 403
+
+            # comprobar token + role guardados en DB (inmediata invalidación si no coinciden)
+            conn = cursor = None
+            try:
+                conn, cursor = get_conn_and_cursor()
+                cursor.execute("SELECT current_session_token, role FROM `user` WHERE id = %s", (user_id,))
+                db_row = cursor.fetchone()
+            except Exception as e:
+                current_app.logger.exception("Error validando sesión: %s", e)
+                return "Error interno", 500
+            finally:
+                try: cursor.close()
+                except: pass
+                try: conn.close()
+                except: pass
+
+            db_token = db_row.get('current_session_token') if db_row else None
+            db_role = (db_row.get('role') or '').strip().lower() if db_row else None
+
+            # si el token o el role no coinciden, forzamos logout y redirigimos
+            if (db_token is None) or (session.get('session_token') != db_token) or (session_role != db_role):
+                current_app.logger.info("Sesión inválida/incongruente, forzando logout. session_role=%s db_role=%s user=%s", session_role, db_role, user_id)
+                session.clear()
+                return redirect(url_for('login'))
+
+            # todo ok
+            g.current_user_id = user_id
+            g.current_user_role = session_role
+            return f(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
 
 @app.route('/')
 def index():
@@ -101,7 +152,7 @@ def serve_page(folder, page):
     try:
         return render_template(template)
     except TemplateNotFound:
-        app.logger.debug(f"Template not found: templates/{template}")
+        app.logger.debug(f"Página no encontrada: templates/{template}")
         abort(404)
 
 @app.route('/preguntas-freq')
@@ -111,13 +162,19 @@ def preguntas_freq():
 # Funciones para redirigir según tipo de usuario en el login
 
 @app.route('/alumnxs/inicio')
+@require_role("alumnx")
 def alumnxs_inicio():
     return render_template('alumnxs/inicio-alumnxs.html')
 
 @app.route('/teachers/inicio')
+@require_role("docente")
 def teachers_inicio():
     return render_template('teachers/inicio-teachers.html')
 
+@app.route('/admin/inicio')
+@require_role("admin")
+def admin_inicio():
+    return render_template('admin/inicio-admin.html')
 
 # Función para logear usuarios
 @app.route('/login', methods=['GET', 'POST'])
@@ -129,50 +186,55 @@ def login():
     if request.method == 'POST':
         uname = request.form.get('uname', '').strip()
         psw = request.form.get('psw', '')
-        role = request.form.get("role")
-
-        cursor = None
-        user = None
+        role = (request.form.get("role") or '').strip().lower()
+        # validar role...
+        conn = cursor = None
         try:
             conn, cursor = get_conn_and_cursor()
-            cursor.execute("SELECT id, name, password, role FROM `user` WHERE matricula = %s AND role = %s", (uname,role))
+            cursor.execute("SELECT id, name, password, role FROM `user` WHERE matricula = %s AND role = %s", (uname, role))
             user = cursor.fetchone()
         except Exception as e:
             current_app.logger.exception("Error en login - consulta user: %s", e)
             user = None
         finally:
-            try:
-                if cursor:
-                    cursor.close()
-            except:
-                pass
-            try:
-                if conn:
-                    conn.close()
-            except:
-                pass
+            try: cursor.close()
+            except: pass
+            try: conn.close()
+            except: pass
 
-        # Validar usuario (protección: user['password'] podría ser None)
         stored_hash = (user.get('password') if user else None)
         if not user or not stored_hash or hashlib.md5(psw.encode()).hexdigest() != stored_hash:
             error = "Usuario o contraseña incorrectos"
+            # render según role...
+        else:
+            # después de validar password:
+            session.clear()
+            session.permanent = True
+            session['user_id'] = user['id']
+            session['role'] = user['role']
+            session['user_name'] = user['name']
 
-            if role == 'alumnx':
-                return render_template('alumnxs/login-alumnxs.html', error=error)
-            elif role == 'docente':
-                return render_template('teachers/login-teachers.html', error=error)
-            elif role == 'admin':
-                return render_template('admin/login-admin.html', error=error)
+            session_token = uuid4().hex
+            session['session_token'] = session_token
 
-        # Login OK
-        session.clear()
-        session["logged_in"] = True
-        session['user_id'] = user['id']
-        session['user_name'] = user['name']
-        session['user_role'] = user['role']
-        session['role'] = user['role']
+            # guardar token en DB
+            conn = cursor = None
+            try:
+                conn, cursor = get_conn_and_cursor()
+                cursor.execute("UPDATE `user` SET current_session_token = %s WHERE id = %s", (session_token, user['id']))
+                conn.commit()
+            except Exception:
+                current_app.logger.exception("Error al guardar token de sesión")
+            finally:
+                try: cursor.close()
+                except: pass
+                try: conn.close()
+                except: pass
 
-        
+
+            # redirect según role...
+
+
         if role == 'alumnx':
             return redirect(url_for('encuestas_alumnx'))
         elif role == 'docente':
@@ -183,22 +245,27 @@ def login():
     # GET request
     return render_template('index.html', error=error)
 
-def require_role(role):
-    def decorator(f):
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            if not session.get("logged_in"):
-                return redirect(url_for("login"))
-            if session.get("role") != role:
-                return "Acceso denegado", 403
-            return f(*args, **kwargs)
-        return wrapper
-    return decorator
 
 @app.route('/logout')
 def logout():
-    session.clear() 
-    return redirect(url_for('index')) 
+    uid = session.get('user_id')
+    if uid:
+        try:
+            conn, cursor = get_conn_and_cursor()
+            cursor.execute("UPDATE `user` SET current_session_token = NULL WHERE id = %s", (uid,))
+            conn.commit()
+        except Exception:
+            current_app.logger.exception("Error invalidando token al logout")
+        finally:
+            try: cursor.close()
+            except: pass
+            try: conn.close()
+            except: pass
+    session.clear()
+    return redirect(url_for('index'))
+
+
+
 
 # =========================
 # Guardar historial en session (solo GETs, evita static y POST)
@@ -308,13 +375,7 @@ def go_back_2():
 @app.route('/alumnxs/inicio-alumnxs', methods=['GET'])
 @require_role("alumnx")
 def encuestas_alumnx():
-    conn = None
-    cursor = None
     error = None
-
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
     user_id = session['user_id']
     now = dt.now()   # <-- recalcular el now en cada petición (antes era global e inmóvil)
 
@@ -371,13 +432,7 @@ def encuestas_alumnx():
 @app.route('/alumnxs/inicio-alumnxs/<int:id_encuesta>', methods=['GET'])
 @require_role("alumnx")
 def contestar_encuesta(id_encuesta):
-    conn = None
-    cursor = None
     error = None
-
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
     cursor = None
     try:
         conn, cursor = get_conn_and_cursor()
@@ -414,13 +469,6 @@ def contestar_encuesta(id_encuesta):
 @app.route('/alumnxs/inicio-alumnxs/<int:id_encuesta>', methods=['POST'])
 @require_role("alumnx")
 def enviar_respuestas(id_encuesta):
-    conn = None
-    cursor = None
-    error = None
-
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
     try:
         conn, cursor = get_conn_and_cursor()
         user_id = session['user_id']
@@ -503,7 +551,6 @@ def results_teachers():
         data = request.get_json() or {}
         first_filter = (data.get('first_filter') or '').strip()
 
-        cursor = None
         try:
             conn, cursor = get_conn_and_cursor()
             if first_filter == 'Materia':
@@ -665,8 +712,6 @@ def results_teachers():
 @app.route('/teachers/download-report', methods=['GET'])
 @require_role("docente")
 def download_teacher_report():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
     user_id = session['user_id']
 
     try:
@@ -708,11 +753,6 @@ def download_teacher_report():
     return send_file(pdf_path, as_attachment=True, download_name="Reporte_Métricas.pdf")
 
 
-# alias que redirige a la vista admin (ahora admin_users es la única definicion para /admin/inicio)
-@app.route('/admin/inicio-admin')
-@require_role("admin")
-def alias_admin_inicio():
-    return redirect(url_for('admin_users'))
 
 
 @app.route('/admin/inicio', methods=['GET'])
@@ -795,6 +835,7 @@ def admin_users():
     )
 
 @app.route('/admin/api/users-all', methods=['GET'])
+@require_role("admin")
 def admin_api_users_all():
     conn = None
     cursor = None
@@ -877,6 +918,7 @@ def admin_api_users_all():
             pass
 
 @app.route('/admin/api/materias', methods=['GET'])
+@require_role("admin")
 def admin_api_materias():
     conn = None
     cursor = None
@@ -979,6 +1021,7 @@ def admin_api_materias():
     return jsonify(materias)
 
 @app.route('/admin/api/respuestas', methods=['GET'])
+@require_role("admin")
 def admin_api_respuestas():
     conn = None
     cursor = None
@@ -1224,18 +1267,10 @@ def download_admin_report():
         return "Error generando PDF", 500
 
 
-
-
-def is_admin_session():
-    role_in_session = (session.get('role') or session.get('user_role') or '').strip().lower()
-    return ('user_id' in session) and (role_in_session == 'admin')
-
-
 @app.route('/admin/api/user-create', methods=['POST'])
+@require_role("admin")
 def admin_api_user_create():
-    if not is_admin_session():
-        return jsonify({'error': 'Prohibido'}), 403
-    
+
     data = request.get_json() or {}
 
     id = (data.get('id') or '').strip()
@@ -1344,9 +1379,8 @@ def admin_api_user_create():
         except: pass
 
 @app.route('/admin/api/user-update', methods=['POST'])
+@require_role("admin")
 def admin_api_user_update():
-    if not is_admin_session():
-        return jsonify({'error': 'Prohibido.'}), 403
     data = request.get_json() or {}
     uid = data.get('id')
     if not uid:
@@ -1413,12 +1447,12 @@ def admin_api_user_update():
         except: pass
 
 @app.route('/admin/api/user-delete', methods=['POST'])
+@require_role("admin")
 def admin_api_user_delete():
-    if not is_admin_session():
-        return jsonify({'error': 'Prohibido'}), 403
+
     data = request.get_json() or {}
     uid = data.get('id')
-    role = (data.get('role') or '').strip()
+
     if not uid:
         return jsonify({'error': 'Falta de id.'}), 400
     conn = cursor = None
@@ -1443,15 +1477,15 @@ def admin_api_user_delete():
 
 
 @app.route('/admin/api/materia-create', methods=['POST'])
+@require_role("admin")
 def admin_api_materia_create():
-    if not is_admin_session():
-        return jsonify({'error': 'Prohibido'}), 403
+
     
     data = request.get_json() or {}
 
     name = (data.get('name') or '').strip()
-    id_docente = data.get('docente')  # viene tal cual del JSON
-    id_grupo = data.get('grupo')      # viene tal cual del JSON
+    id_docente = data.get('docente')  
+    id_grupo = data.get('grupo')     
 
     if not name or not id_docente or not id_grupo:
         return jsonify({'error': 'Faltan campos'}), 400
@@ -1532,9 +1566,9 @@ def admin_api_materia_create():
         if conn: conn.close()
 
 @app.route('/admin/api/materia-delete', methods=['POST'])
+@require_role("admin")
 def admin_api_materia_delete():
-    if not is_admin_session():
-        return jsonify({'error': 'Prohibido'}), 403
+
     data = request.get_json() or {}
     uid = data.get('id')
 
@@ -1562,9 +1596,8 @@ def admin_api_materia_delete():
 
 
 @app.route('/admin/api/materia-update', methods=['POST'])
+@require_role("admin")
 def admin_api_materia_update():
-    if not is_admin_session():
-        return jsonify({'error': 'Prohibido.'}), 403
     
     data = request.get_json() or {}
     uid = data.get('id')
@@ -1626,6 +1659,45 @@ def admin_api_materia_update():
         try:
             if conn: conn.close()
         except: pass
+
+# handler para errores HTTP (404, 403, etc)
+@app.errorhandler(HTTPException)
+def handle_http_exception(e):
+    # e.code, e.name, e.description
+    current_app.logger.warning("HTTPException: %s %s", e.code, e.description)
+    accept = request.headers.get('Accept', '')
+    payload = {'error': 'http', 'code': e.code, 'message': e.description}
+    if 'application/json' in accept.lower() or request.path.startswith('/admin/api/'):
+        return jsonify(payload), e.code
+    return render_template('error.html', code=e.code, title=e.name, message=e.description), e.code
+
+# handler para errores de BD (ej. servidor MySQL caído)
+@app.errorhandler(mysql_errors.DatabaseError)
+def handle_db_error(e):
+    current_app.logger.exception("DatabaseError global handler: %s", e)
+    accept = request.headers.get('Accept', '')
+    payload = {'error': 'db_unavailable', 'message': 'No es posible conectar con la base de datos. Intenta más tarde.'}
+    if 'application/json' in accept.lower() or request.path.startswith('/admin/api/'):
+        return jsonify(payload), 503
+    return render_template('error.html', code=503, title='Servicio no disponible',
+                           message='No es posible conectar con la base de datos. Intenta más tarde.'), 503
+
+# handler para excepciones no atrapadas
+@app.errorhandler(Exception)
+def handle_unexpected_error(e):
+    current_app.logger.exception("Unhandled exception: %s", e)
+    accept = request.headers.get('Accept', '')
+    payload = {'error': 'internal', 'message': 'Ocurrió un error interno. Intenta nuevamente más tarde.'}
+    # si es HTTPException, reuse su código (aunque Werkzeug ya lo manejaría antes)
+    code = 500
+    if isinstance(e, HTTPException):
+        code = e.code
+        payload['message'] = e.description
+    if 'application/json' in accept.lower() or request.path.startswith('/admin/api/'):
+        return jsonify(payload), code
+    return render_template('error.html', code=code, title='Error interno', message=payload['message']), code
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
