@@ -171,10 +171,6 @@ def alumnxs_inicio():
 def teachers_inicio():
     return render_template('teachers/inicio-teachers.html')
 
-@app.route('/admin/inicio')
- 
-def admin_inicio():
-    return render_template('admin/inicio-admin.html')
 
 # Función para logear usuarios
 @app.route('/login', methods=['GET', 'POST'])
