@@ -1,5 +1,3 @@
-
-
 document.addEventListener('DOMContentLoaded', () => {
   const tableBody = document.querySelector('#users-table tbody');
 
