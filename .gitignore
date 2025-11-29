@@ -2,4 +2,4 @@
 /flask-env/
 tests.py
 estructura.sql
-__pycache__/
+/pycache/*
