@@ -1261,7 +1261,7 @@ def admin_api_user_create():
                 )
 
             # 2. Crear un único form para el docente
-            form_title = f'Form - Docente: {name}'
+            form_title = f'Docente: {name}'
             description = f'Evaluación del/la docente ({name})'
 
             cursor.execute("""
