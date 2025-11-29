@@ -34,6 +34,11 @@
                 <li><a href="{{ url_for('preguntas_freq') }}">Preguntas frecuentes</a></li>
 
             </ul>
+             <div class="hamburger" id="hamburger">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
         </div>
     </nav>
 
@@ -71,8 +76,8 @@
       </div>
 
       {% elif q.tipo == "texto" %}
-      <!-- Nota: si quieres múltiples textareas, cambia el name para incluir q.id -->
-      <textarea name="q{{ q.id }}_comments" rows="4" placeholder="Escribe tu respuesta aquí..." aria-label="{{ q.texto_pregunta }}"></textarea>
+
+      <textarea name="q{{ q.id }}_comments" rows="4" placeholder="Escribe tu respuesta aquí..." aria-label="{{ q.texto_pregunta }} " maxlength="300" minlength="3"></textarea>
       {% endif %}
     </div>
     {% endfor %}
@@ -109,6 +114,7 @@
       </div>
      </div>
   </footer>
-  
+  <script src="{{ url_for('static', filename='js/menu.js') }}"></script>
+
 </body>
 </html>

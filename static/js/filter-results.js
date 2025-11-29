@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const secondForm = document.getElementById('second-form');
   const filterTypeInput = document.getElementById('filter-type');
 
-  // fallback: si la template no inyectó RESULTS_ENDPOINT
+
   const endpoint = (typeof RESULTS_ENDPOINT !== 'undefined' && RESULTS_ENDPOINT) ? RESULTS_ENDPOINT : window.location.pathname;
 
   function prepareSecondSelect() {
@@ -71,15 +71,15 @@ document.addEventListener('DOMContentLoaded', () => {
       opt.textContent = 'Error al cargar opciones';
       secondSelect.appendChild(opt);
     }
-      // asegurarnos que antes de submit exista el filter-type
+
   secondForm.addEventListener('submit', (ev) => {
-    // si no hay tipo, prevenir submit
+
     if (!filterTypeInput.value) {
       ev.preventDefault();
       alert('Selecciona primero el tipo de filtro (Materia/Grupo).');
       return false;
     }
-    // si no hay seleccionado en secondSelect, permitir submit igualmente (el backend devolverá vacío)
+
     return true;
   });
 });

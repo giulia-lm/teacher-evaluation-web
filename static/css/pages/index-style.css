@@ -1,5 +1,4 @@
 
-/* User selection Section */
 .outlined-text {
   font-family: "Fugaz One", sans-serif;
   font-size: 5rem;
@@ -9,6 +8,28 @@
   text-align: center;
   -webkit-text-stroke: 2px var(--brown);
 }
+
+.start-section{
+  padding-top: clamp(60px, 10vw, 200px);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background-color: var(--light-bg);
+  text-align: center;
+}
+
+/* responsive */
+@media (max-width: 768px) {
+  .outlined-text {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  line-height: 1;
+}
+}
+/* User selection Section */
+
 
 .users {
   margin: 3rem 3rem;

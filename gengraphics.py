@@ -102,10 +102,8 @@ def figs_to_pdf(figures, pdf_title="teacher_metrics.pdf", doc_title="Reporte de 
     """
     with PdfPages(pdf_title, metadata={'Title': doc_title}) as pdf:
 
-        # -----------------------------
-        # PORTADA DEL DOCUMENTO
-        # -----------------------------
-        fig_portada = plt.figure(figsize=(8.27, 11.69))  # A4 size portrait
+        # portada
+        fig_portada = plt.figure(figsize=(8.27, 11.69))  # A4 size
         fig_portada.clf()
 
         fig_portada.text(
@@ -135,13 +133,11 @@ def figs_to_pdf(figures, pdf_title="teacher_metrics.pdf", doc_title="Reporte de 
         pdf.savefig(fig_portada)
         plt.close(fig_portada)
 
-        # -----------------------------
-        # GRÁFICOS (uno por página)
-        # -----------------------------
+        # graficos
         for form_name, _ in figures.items():
             for fig in figures[form_name]:
                 fig_page = plt.figure(figsize=(8.27, 11.69))  
-                fig_page.subplots_adjust(top=0.87)  # espacio para título dentro de la página
+                fig_page.subplots_adjust(top=0.87) 
 
                 fig_page.suptitle(
                     f"Resultados del formulario '{form_name}'",

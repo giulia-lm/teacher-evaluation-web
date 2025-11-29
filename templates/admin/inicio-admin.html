@@ -19,7 +19,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Fugaz+One&family=Orbitron:wght@400..900&family=VT323&display=swap" rel="stylesheet">
-</head>
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css">
+
+  </head>
 <body>
     <!-- Navigation -->
     <nav id="navbar">
@@ -34,6 +39,11 @@
                 <li><a href="{{ url_for('preguntas_freq') }}">Preguntas frecuentes</a></li>
 
             </ul>
+             <div class="hamburger" id="hamburger">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
         </div>
     </nav>
 
@@ -61,7 +71,6 @@
 </section>
 
 
-
   <h1>Panel de Administración</h1>
 {% block content %}
 
@@ -76,7 +85,8 @@
     <option value="admin">Admins</option>
   </select>
 
-  <input type="month" id="filtro-creado">
+  <input id="filtro-creado" name="filtro-creado" type="month" placeholder="YYYY-MM">
+
   <button id="btn-filtrar-users">Filtrar</button>
   <button id="btn-reset-users">Reset</button>
 </div>
@@ -113,11 +123,11 @@
       <input type="hidden" name="id" id="user-id">
 
       <label>Nombre
-        <input name="name" id="user-name" required>
+        <input name="name" id="user-name" maxlength="40" minlength="3" required>
       </label>
 
-      <label>Matrícula
-        <input name="matricula" id="user-matricula" required>
+      <label>Matrícula (Números y letras, máximo 10 caractéres)
+        <input name="matricula" id="user-matricula" required maxlength="10" minlength="3">
       </label>
 
 <label>Rol:
@@ -150,8 +160,8 @@
   {% endfor %}
 </div>
 
-      <label>Contraseña
-        <input type="password" id="user-password" name="password" placeholder="Dejar vacío si no hay cambios">
+      <label>Contraseña (Máximo 15 caractéres)
+        <input type="password" id="user-password" name="password" placeholder="Dejar vacío si no hay cambios" maxlength="15" minlength="3">
       </label>
 
       <div class="form-actions">
@@ -212,7 +222,7 @@
       <input type="hidden" name="id" id="materia-id">
 
       <label>Nombre
-        <input name="name" id="materia-name" required>
+        <input name="name" id="materia-name" maxlength="40" minlength="3" required>
       </label>
 
 <div id="docentes-options">
@@ -265,14 +275,15 @@
     {% endfor %}
   </select>
 
-  <input type="month" id="filtro-fecha">
+  <input id="filtro-fecha" name="filtro-fecha" type="month" placeholder="YYYY-MM">
+
   <button id="btn-filtrar-respuestas">Filtrar</button>
   <button id="btn-reset-respuestas">Reset</button>
 </div> 
 
-<table id="responses-table">
+<table id="responses-table" class="responses-table">
   <thead>
-    <tr>
+    <tr class="responses-tr">
       <th>Nombre del Form</th>
       <th>Alumno</th>
       <th>Fecha</th>
@@ -320,11 +331,117 @@
       </div>
      </div>
   </footer>
+<script src="{{ url_for('static', filename='js/menu.js') }}"></script>
 
 <script src="{{ url_for('static', filename='js/dashboard-admin.js') }}"></script>
 <script src="{{ url_for('static', filename='js/dashboard-materias.js') }}"></script>
 <script src="{{ url_for('static', filename='js/dashboard-respuestas.js') }}"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/monthSelect.js"></script>
+<script>
+
+  const FLATPICKR_JS = 'https://cdn.jsdelivr.net/npm/flatpickr';
+  const MONTH_PLUGIN_JS = 'https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js';
+
+  function supportsInputMonth() {
+    const i = document.createElement('input');
+    i.setAttribute('type', 'month');
+    return i.type === 'month';
+  }
+
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      // Si ya cargado, resuelve
+      if (Array.from(document.scripts).some(s => s.src && s.src.includes(src))) {
+        return resolve();
+      }
+      const s = document.createElement('script');
+      s.src = src;
+      s.async = true;
+      s.onload = () => resolve();
+      s.onerror = (e) => reject(new Error('Error cargando script: ' + src));
+      document.head.appendChild(s);
+    });
+  }
+
+  async function ensureFlatpickrAndPlugin() {
+    // cargar flatpickr si no existe
+    if (typeof window.flatpickr !== 'function') {
+      try {
+        await loadScript(FLATPICKR_JS);
+        console.debug('flatpickr cargado');
+      } catch (e) {
+        console.error(e);
+        throw e;
+      }
+    }
+    // cargar plugin monthSelect si no existe
+    if (typeof window.monthSelectPlugin !== 'function') {
+      try {
+        await loadScript(MONTH_PLUGIN_JS);
+        console.debug('monthSelect plugin cargado');
+      } catch (e) {
+        console.error(e);
+        throw e;
+      }
+    }
+  }
+
+  function initMonthPickers(selector = 'input[type="month"]') {
+    const elems = document.querySelectorAll(selector);
+    elems.forEach(el => {
+      // si ya fue inicializado (atributo data-fp), saltar
+      if (el.dataset.fpInitialized === '1') return;
+      try {
+        flatpickr(el, {
+          dateFormat: "Y-m",
+          altInput: true,
+          altFormat: "F Y",
+          // plugin: monthSelect
+          plugins: [ new monthSelectPlugin({
+              shorthand: false,
+              dateFormat: "Y-m",
+              altFormat: "F Y"
+          }) ],
+          onReady: function(selectedDates, dateStr, instance) {
+            el.dataset.fpInitialized = '1';
+          },
+          onChange: function(selectedDates, dateStr, instance) {
+            // por si quieres que cierre inmediatamente:
+            // instance.close();
+          }
+        });
+      } catch (err) {
+        console.error('Error inicializando flatpickr en', el, err);
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Si el navegador soporta input[type="month"], lo dejamos nativo (Chrome/Opera)
+    if (supportsInputMonth()) {
+      console.debug('Navegador soporta input[type=month] — no se aplica polyfill.');
+      return;
+    }
+
+    // En Firefox: convertir inputs type=month a text y aplicar flatpickr
+    const elems = document.querySelectorAll('input[type="month"]');
+    if (!elems.length) return;
+
+    elems.forEach(el => {
+      el.type = 'text'; // evita comportamiento inesperado
+    });
+
+    try {
+      await ensureFlatpickrAndPlugin();
+      initMonthPickers('input[type="text"][name="filtro-creado"], input[type="text"][name="filtro-fecha"], input[type="text"][id="filtro-creado"], input[type="text"][id="filtro-fecha"], input[type="text"].month-polyfill');
+
+    } catch (e) {
+      console.error('No fue posible inicializar month picker polyfill:', e);
+    }
+  });
+</script>
 
 </body>
 </html>

@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   const tableBody = document.querySelector('#users-table tbody');
 
-  // modal elements (si usas modal)
+  // modal elements 
   const modal = document.getElementById('user-modal');
   const modalTitle = document.getElementById('modal-title');
   const form = document.getElementById('user-form');
@@ -16,21 +16,32 @@ document.addEventListener('DOMContentLoaded', () => {
   
 
 
-  function showToast(msg) {
-    const container = document.getElementById("toast-container");
-    const toast = document.createElement("div");
-    toast.classList.add("toast");
-    toast.textContent = msg;
-    container.appendChild(toast);
+let activeToast = null;
 
-    setTimeout(() => {
-      toast.remove();
-    }, 5000); 
-  }
+function showToast(msg) {
+
+  const container = document.getElementById("toast-container");
+
+  if (activeToast) return;
+
+  const toast = document.createElement("div");
+  toast.classList.add("toast");
+  toast.textContent = msg;
+
+  container.appendChild(toast);
+  activeToast = toast;
+
+  setTimeout(() => {
+    toast.remove();
+    activeToast = null;
+  }, 1000);
+}
+
 
   function toastConfirm(message) {
   return new Promise((resolve) => {
     const container = document.getElementById("toast-container");
+    if (activeToast) return;
 
     const toast = document.createElement("div");
     toast.classList.add("toast-confirm");
@@ -43,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
+    activeToast = toast;
     container.appendChild(toast);
 
     toast.querySelector(".toast-yes").onclick = () => {
@@ -161,7 +173,7 @@ function showModal(mode='create', user={}) {
         return;
       }
       hideModal();
-      // si viene user en data, reusar; si no, recargar la lista
+
       await loadAllUsers();
     } catch (err) {
       console.error('Error guardando usuario:', err);

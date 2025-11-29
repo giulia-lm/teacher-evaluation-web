@@ -16,20 +16,33 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnReset = document.getElementById('btn-reset-materias');
 
 
-  function showToast(msg) {
-    const container = document.getElementById("toast-container");
-    const toast = document.createElement("div");
-    toast.classList.add("toast");
-    toast.textContent = msg;
-    container.appendChild(toast);
+let activeToast = null;
 
-    setTimeout(() => {
-      toast.remove();
-    }, 5000); 
-  }
+function showToast(msg) {
+
+  const container = document.getElementById("toast-container");
+
+  // Si ya hay un toast, no crear otro
+  if (activeToast) return;
+
+  const toast = document.createElement("div");
+  toast.classList.add("toast");
+  toast.textContent = msg;
+
+  container.appendChild(toast);
+  activeToast = toast;
+
+  setTimeout(() => {
+    toast.remove();
+    activeToast = null;
+  }, 1000);
+}
+
+
   function toastConfirm(message) {
   return new Promise((resolve) => {
     const container = document.getElementById("toast-container");
+    if (activeToast) return;
 
     const toast = document.createElement("div");
     toast.classList.add("toast-confirm");
@@ -42,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
+    activeToast = toast;
     container.appendChild(toast);
 
     toast.querySelector(".toast-yes").onclick = () => {
@@ -55,7 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   });
 }
-
 
 
 function showModalMateria(mode='create', materia={}) {

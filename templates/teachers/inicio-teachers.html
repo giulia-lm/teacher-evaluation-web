@@ -34,6 +34,11 @@
                 <li><a href="{{ url_for('preguntas_freq') }}">Preguntas frecuentes</a></li>
 
             </ul>
+             <div class="hamburger" id="hamburger">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
         </div>
     </nav>
 
@@ -92,7 +97,7 @@
   </form>
 </section>
 
-<!-- Área de gráficos: usa display_figures para decidir qué mostrar -->
+
 <div class="all-forms">
 
   {% if message %}
@@ -151,5 +156,7 @@
       </div>
      </div>
   </footer>
+  <script src="{{ url_for('static', filename='js/menu.js') }}"></script>
+
 </body>
 </html>

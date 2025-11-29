@@ -124,45 +124,37 @@ span.psw a:hover {
 /* Seccion de Bienvenida con imagen */
 
 .welcome-section{
-    padding-top: 200px; 
-  display:contents;
+  padding-top: clamp(60px, 10vw, 200px);
+  display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
- 
+  gap: 2rem;
   background-color: var(--light-bg);
 }
 
-.welcome-textBox {
-  
-  justify-content: center;
-  align-items: center;
-
-  background-color: var(--light-bg);
+.welcome-textBox{
+  text-align:center;
 }
 
 .welcome-textBox h2{
-  text-align: center;
   font-family: "Fugaz One", sans-serif;
   color: var(--orange);
-  font-size: 6rem;
-  -webkit-text-stroke-width: 1px;
-  -webkit-text-stroke-color: var(--brown);
+  font-size: clamp(2.5rem, 6vw, 6rem);
+  -webkit-text-stroke: 1px var(--brown);
 }
 
-.welcome-image {
-  flex-shrink: 0;
+.welcome-image{
   display: flex;
-  align-items: center;
   justify-content: center;
 }
 
-.welcome-image img.avatar {
-  width: 200px;
+.welcome-image img.avatar{
+  width: clamp(120px, 25vw, 200px);
   height: auto;
   border-radius: 50%;
   transition: transform 0.4s ease, filter 0.4s ease;
 }
-
 
 /* botones */
 .button {

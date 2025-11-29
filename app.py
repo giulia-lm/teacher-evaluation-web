@@ -1,39 +1,26 @@
-# app.py (versión corregida)
-from flask import Flask, render_template, request, redirect, url_for, session, abort, jsonify, flash, current_app
+
+from flask import Flask, render_template, redirect, url_for, session, abort, jsonify, flash, current_app
+from flask import request, g, make_response, send_file
+
 from functools import wraps
-from flask import session, redirect, url_for, current_app, request, g
-from flask import send_file
-import math
-from functools import wraps
-import datetime
 import mysql.connector
-import os
+
 from jinja2 import TemplateNotFound
 import hashlib
-import matplotlib.pyplot as plt
-import numpy as np
+
 import re
-from gengraphics import generate_graphics, figs_to_pdf
-from datetime import datetime as dt
-from flask import render_template, jsonify
-from werkzeug.exceptions import HTTPException
-import mysql.connector
-from mysql.connector import errors as mysql_errors
-import mysql.connector
-from mysql.connector import Error
+import os
+from io import BytesIO
+from datetime import datetime, timedelta
+import calendar
+
 from uuid import uuid4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet
-from flask import make_response
-from flask import send_file, make_response
-from reportlab.pdfgen import canvas
-from io import BytesIO
-from reportlab.platypus import Paragraph
-from reportlab.lib.styles import ParagraphStyle
-from datetime import timedelta
-import calendar
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+
+from gengraphics import generate_graphics, figs_to_pdf
 
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
@@ -51,29 +38,27 @@ app.config.update({
 DB_CONFIG = {
     'host': "localhost",
     'user': "root",
-    'password': "",   # pon tu contraseña si aplica
+    'password': "", 
     'database': "evaluaciones",
-    # opcionalmente add: 'pool_name': 'mypool', 'pool_size': 3
 }
 
 app.config.update({
-    'SESSION_COOKIE_SECURE': True,         # cookie solo via HTTPS
-    'SESSION_COOKIE_HTTPONLY': True,       # no accesible via JS
-    'SESSION_COOKIE_SAMESITE': 'Lax',     # o 'Strict' según UX
-    'PERMANENT_SESSION_LIFETIME': timedelta(days=7),  # duración sesión
+    'SESSION_COOKIE_SECURE': True,        
+    'SESSION_COOKIE_HTTPONLY': True,       
+    'SESSION_COOKIE_SAMESITE': 'Lax',   
+    'PERMANENT_SESSION_LIFETIME': timedelta(days=7), 
 })
+
 # inicializamos la conexión (la función connect_db la recreará si se pierde)
 def connect_db():
     return mysql.connector.connect(**DB_CONFIG)
 
-db = connect_db()
+
 
 
 def get_conn_and_cursor(buffered=True, dictionary=True):
     """
     Abre una nueva conexión y devuelve (conn, cursor).
-    El caller es responsable de cerrar cursor y conn en finally.
-    Esto evita compartir una sola conexión global entre threads.
     """
     conn = None
     try:
@@ -103,7 +88,7 @@ def require_role(*allowed_roles):
             # normalizar role
             session_role = (session.get('role') or '').strip().lower()
             if allowed_roles and session_role not in [r.lower() for r in allowed_roles]:
-                current_app.logger.warning("Acceso denegado por role: path=%s role=%s user=%s", request.path, session_role, user_id)
+                current_app.logger.warning("Acceso denegado por rol: path=%s role=%s user=%s", request.path, session_role, user_id)
                 session.clear()
                 return "Acceso denegado", 403
 
@@ -373,7 +358,7 @@ def go_back_2():
 def encuestas_alumnx():
     error = None
     user_id = session['user_id']
-    now = dt.now()   # <-- recalcular el now en cada petición (antes era global e inmóvil)
+    now = datetime.now()   # <-- recalcular el now en cada petición (antes era global e inmóvil)
 
     cursor = None
     try:
@@ -468,7 +453,7 @@ def enviar_respuestas(id_encuesta):
     try:
         conn, cursor = get_conn_and_cursor()
         user_id = session['user_id']
-        now = dt.now()
+        now = datetime.now()
 
         # Insertar fila de response y obtener response_id
         cursor.execute(
@@ -711,7 +696,7 @@ def download_teacher_report():
     user_id = session['user_id']
 
     try:
-        cursor = db.cursor(dictionary=True)
+        conn, cursor = get_conn_and_cursor()
         cursor.execute("""
             SELECT
                 f.id AS form_id,

@@ -36,6 +36,13 @@
             <ul class="nav-links">
                 <li><a href="{{ url_for('go_back') }}">Regresar</a></li>
             </ul>
+
+            <div class="hamburger" id="hamburger">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+
         </div>
     </nav>
 
@@ -48,9 +55,11 @@
 
 
 <!-- Sección de inicio / Bienvenida -->
+ <section class="start-section">
+    <p class="outlined-text">Preguntas Frecuentes</p>
+  </section>
 
   <section id="users" class="users">
-    <p class="outlined-text">Preguntas Frecuentes</p>
     <div class="users-grid">
 
         <div class="users-item">
@@ -163,6 +172,7 @@
       </div>
      </div>
   </footer>
+<script src="{{ url_for('static', filename='js/menu.js') }}"></script>
 
 </body>
 </html>
