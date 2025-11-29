@@ -49,13 +49,6 @@ app.config.update({
     'PERMANENT_SESSION_LIFETIME': timedelta(days=7), 
 })
 
-# inicializamos la conexión (la función connect_db la recreará si se pierde)
-def connect_db():
-    return mysql.connector.connect(**DB_CONFIG)
-
-
-
-
 def get_conn_and_cursor(buffered=True, dictionary=True):
     """
     Abre una nueva conexión y devuelve (conn, cursor).

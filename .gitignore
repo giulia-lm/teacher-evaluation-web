@@ -1,3 +1,5 @@
 
 /flask-env/
 tests.py
+estructura.sql
+/__pycache__/
