@@ -133,12 +133,18 @@ section{
 
 /* Pregunta */
 .question{
-  display: block;
+  
   font-family: "Fugaz One", sans-serif;
   color: var(--orange);
   font-size: 1.25rem;
   margin-bottom: 20px;
   text-align: center;
+}
+
+.required{
+  color: red;
+  font-size: 1.3rem;
+  margin-left: 4px;
 }
 
 /* Opciones: fila flexible y responsive */
@@ -162,6 +168,7 @@ section{
   transition: background 0.15s ease, box-shadow 0.15s ease;
   border: 1px solid transparent;
 }
+
 
 /* estilo del radio sin alterar comportamiento nativo */
 .option input[type="radio"]{

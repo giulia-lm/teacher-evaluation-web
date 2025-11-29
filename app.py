@@ -188,7 +188,7 @@ def login():
             error = "Usuario o contraseña incorrectos"
             # render según role...
         else:
-            # después de validar password:
+
             session.clear()
             session.permanent = True
             session['user_id'] = user['id']
@@ -245,12 +245,7 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
-
-
-
-# =========================
-# Guardar historial en session (solo GETs, evita static y POST)
-# =========================
+# Guardar historial en session 
 @app.after_request
 def save_history(response):
     try:
@@ -274,7 +269,7 @@ def save_history(response):
 
         entry = {
             "url": clean_url,
-            "endpoint": request.endpoint,     # puede ser None
+            "endpoint": request.endpoint,    
             "view_args": request.view_args or {},
         }
 
@@ -292,10 +287,7 @@ def save_history(response):
 
     return response
 
-
-# =========================
 # Función para obtener URL anterior válida
-# =========================
 def previous_url():
     history = session.get("history", [])
 
@@ -310,11 +302,8 @@ def previous_url():
             return url_for("inicio_alumn")
         return url_for("index")
 
-    # El último es la página actual
-    # El penúltimo es la página anterior real
     previous = history[-2]
 
-    # Si puedo reconstruir con endpoint → mejor
     ep = previous.get("endpoint")
     args = previous.get("view_args") or {}
     if ep:
@@ -322,14 +311,9 @@ def previous_url():
             return url_for(ep, **args)
         except:
             pass
-
-    # Si no, uso la URL cruda
     return previous.get("url") or url_for("index")
 
-
-# =========================
 # Exponer la función a Jinja templates
-# =========================
 @app.context_processor
 def inject_previous_url():
     return dict(previous_url=previous_url)
@@ -345,9 +329,6 @@ def go_back_2():
     if len(history) < 3:
         return redirect(previous_url())   # fallback
     
-    # -1  = actual
-    # -2  = anterior
-    # -3  = dos pasos atrás
     prev2 = history[-3]
     return redirect(prev2['url'])
 
@@ -358,7 +339,7 @@ def go_back_2():
 def encuestas_alumnx():
     error = None
     user_id = session['user_id']
-    now = datetime.now()   # <-- recalcular el now en cada petición (antes era global e inmóvil)
+    now = datetime.now() 
 
     cursor = None
     try:
@@ -460,25 +441,24 @@ def enviar_respuestas(id_encuesta):
             "INSERT INTO response (id_form, id_alumnx, submitted_at) VALUES (%s, %s, %s)",
             (id_encuesta, user_id, now)
         )
-        # En mysql.connector, lastrowid viene del cursor
+
         response_id = cursor.lastrowid
 
         respuestas = request.form
 
         for key, value in respuestas.items():
-            # ignorar campos que no sean de pregunta (ej: csrf, submit)
+            # ignorar campos que no sean de pregunta
             if not key.startswith('q'):
                 continue
 
             # Determinar si es comentario o choice
             if key.endswith('_comments'):
-                # key ejemplo: 'q12_comments' -> obtener '12'
-                question_part = key[len('q'):]               # '12_comments'
+
+                question_part = key[len('q'):]               
                 question_id = int(question_part.replace('_comments', ''))
                 texto_respuesta = value
                 choice_id = None
             else:
-                # key ejemplo: 'q12' -> '12'
                 question_id = int(key[1:])
                 choice_id = int(value) if value else None
                 # obtener texto de la pregunta (opcional)
@@ -618,7 +598,7 @@ def results_teachers():
         figures_base64 = {}
 
     # Parámetros para filtrado vía GET (cuando el usuario hace submit en el second-form)
-    filter_type = request.args.get('filter-type')  # "Materia" o "Grupo"
+    filter_type = request.args.get('filter-type')  
     selected_id = request.args.get('second-filter')
 
     message = None
@@ -721,7 +701,6 @@ def download_teacher_report():
         app.logger.exception("Error generando PDF: %s", e)
         return "Error generando PDF", 500
 
-    # Generar figuras con tu función existente
     try:
         figures, _, figs_forms = generate_graphics(info_for_graphics)
         pdf_path = f"/tmp/teacher_{user_id}_metrics.pdf"
@@ -824,7 +803,7 @@ def admin_api_users_all():
 
         role_filter = (request.args.get('role') or '').strip()
         q = (request.args.get('q') or '').strip()
-        date_filter = (request.args.get('date') or '').strip()  # aceptamos YYYY-MM o YYYY-MM-DD
+        date_filter = (request.args.get('date') or '').strip() 
 
         where = []
         params = []
@@ -838,10 +817,9 @@ def admin_api_users_all():
             like = f"%{q}%"
             params += [like, like]
 
-        # Debug: log lo que llega del frontend
+
         current_app.logger.debug("admin_api_users_all - date_filter raw: '%s'", date_filter)
 
-        # Si date_filter viene en formato YYYY-MM -> construir rango desde primer día hasta último día
         if date_filter:
             # YYYY-MM
             if len(date_filter) == 7 and date_filter[4] == '-':
@@ -851,7 +829,7 @@ def admin_api_users_all():
                     first_day = datetime(year, month, 1).date()
                     last_day_num = calendar.monthrange(year, month)[1]
                     last_day = datetime(year, month, last_day_num).date()
-                    # filtramos por rango (incluye toda la hora del último día)
+                    # filtramos por rango 
                     where.append("u.created_at BETWEEN %s AND %s")
                     params.append(first_day.strftime("%Y-%m-%d") + " 00:00:00")
                     params.append(last_day.strftime("%Y-%m-%d") + " 23:59:59")
@@ -909,9 +887,7 @@ def admin_api_materias():
         where = []
         params = []
 
-        # Si los selects envían IDs, usamos las columnas de las tablas relacionales (más fiables)
         if grupo_filter:
-            # Intentar parsear como entero (id). Si no es entero, asumimos que es nombre y filtramos por g.nombre
             try:
                 gid = int(grupo_filter)
                 where.append("mg.id_grupo = %s")
@@ -970,7 +946,6 @@ def admin_api_materias():
         except:
             pass
 
-    # procesar rows igual que antes...
     materias_map = {}
     for r in rows:
         mid = r['materia_id']
@@ -1020,7 +995,7 @@ def admin_api_respuestas():
             filtros.append("r.id_alumnx = %s")
             params.append(alumnx_id_int)
 
-        # Fecha: interpretamos YYYY-MM (mes) o YYYY-MM-DD (día exacto)
+
         if date_filter:
             current_app.logger.debug("admin_api_respuestas - date_filter raw: '%s'", date_filter)
             # YYYY-MM
@@ -1100,7 +1075,6 @@ def admin_api_respuestas():
         except:
             pass
 
-    # procesar rows igual que antes...
     responses_map = {}
     for r in rows:
         rid = r['response_id']
@@ -1179,9 +1153,8 @@ def download_admin_report():
         styleN = ParagraphStyle(
             name="normal",
             fontSize=9,
-            leading=11,   # espacio entre líneas
+            leading=11,   
         )
-
 
         data = [[
             Paragraph("ID Respuesta", styleN),
@@ -1209,7 +1182,6 @@ def download_admin_report():
 
         table = Table(data, colWidths=[50, 150, 80, 100, 100, 100])
 
-        # Estilos de tabla bonita
         table.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e0710b")),  # encabezado
             ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#331901")),
@@ -1254,8 +1226,6 @@ def admin_api_user_create():
     matricula = (data.get('matricula') or '').strip()
     password = data.get('password') or ''
     role = (data.get('role') or '').strip()
-
-
     
     if not name or not matricula or not role:
         return jsonify({'error': 'Falta rellenar campos'}), 400
@@ -1336,7 +1306,7 @@ def admin_api_user_create():
                 VALUES (%s, %s, 'texto')
             """, (form_id, preguntas[-1]))
 
-            
+
         conn.commit()
         
         cursor.execute("SELECT id, name, matricula, role, created_at FROM `user` WHERE id = %s", (user_id,))
@@ -1362,7 +1332,7 @@ def admin_api_user_update():
         return jsonify({'error': 'Falta id'}), 400
     name = (data.get('name') or '').strip()
     matricula = (data.get('matricula') or '').strip()
-    password = data.get('password')  # optional: if provided, update hash
+    password = data.get('password')  
     role = (data.get('role') or '').strip()
 
     fields = []

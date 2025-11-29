@@ -63,21 +63,24 @@
 
     {% for q in questions %}
     <div class="question-card">
-      <label class="question" name="question" id="{{ q.id }}">{{ q.texto_pregunta }}</label>
+
+      
 
       {% if q.tipo == "multiple" %}
+      <label class="question" name="question" id="{{ q.id }}">{{ q.texto_pregunta }}</label> <span class="required">*</span>
       <div class="options" role="radiogroup" aria-labelledby="qlabel-{{ q.id }}">
         {% for option in options[q.id] %}
         <label class="option">
           <input type="radio" name="q{{ q.id }}" value="{{ option.id }}" required>
-          <span class="option-text">{{ option.choice_text }}</span>
+
+          <span class="option-text">{{ option.choice_text }}</span> 
         </label>
         {% endfor %}
       </div>
 
       {% elif q.tipo == "texto" %}
-
-      <textarea name="q{{ q.id }}_comments" rows="4" placeholder="Escribe tu respuesta aquí..." aria-label="{{ q.texto_pregunta }} " maxlength="300" minlength="3"></textarea>
+      <label class="question" name="question" id="{{ q.id }}">{{ q.texto_pregunta }}</label> 
+      <textarea name="q{{ q.id }}_comments" rows="4" placeholder="Escribe tu respuesta aquí..." aria-label="{{ q.texto_pregunta }} " maxlength="300"></textarea>
       {% endif %}
     </div>
     {% endfor %}
