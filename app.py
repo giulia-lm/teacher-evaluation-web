@@ -4,7 +4,8 @@ from flask import request, g, make_response, send_file
 
 from functools import wraps
 import mysql.connector
-
+import time
+from mysql.connector import Error
 from jinja2 import TemplateNotFound
 import hashlib
 
@@ -33,41 +34,28 @@ app.config.update({
     'PERMANENT_SESSION_LIFETIME': timedelta(days=7),
 })
 
-
-# --- Configuración de la BD (centralizada) ---
+# lee desde variables de entorno. Dentro de Docker el host por defecto será 'db'.
 DB_CONFIG = {
-    'host': "localhost",
-    'user': "root",
-    'password': "", 
-    'database': "evaluaciones",
+    "host": os.getenv("DB_HOST", "db"),
+    "port": int(os.getenv("DB_PORT", 3306)),
+    "user": os.getenv("DB_USER", "root"),
+    "password": os.getenv("DB_PASS", ""),
+    "database": os.getenv("DB_NAME", "evaluaciones"),
 }
 
-app.config.update({
-    'SESSION_COOKIE_SECURE': True,        
-    'SESSION_COOKIE_HTTPONLY': True,       
-    'SESSION_COOKIE_SAMESITE': 'Lax',   
-    'PERMANENT_SESSION_LIFETIME': timedelta(days=7), 
-})
 
-def get_conn_and_cursor(buffered=True, dictionary=True):
-    """
-    Abre una nueva conexión y devuelve (conn, cursor).
-    """
-    conn = None
-    try:
-        conn = mysql.connector.connect(**DB_CONFIG)
-        # opcional: conn.autocommit = True
-        cursor = conn.cursor(buffered=buffered, dictionary=dictionary)
-        return conn, cursor
-    except Exception as e:
-        # si no se pudo conectar, asegurar cierre parcial
-        if conn:
-            try:
-                conn.close()
-            except:
-                pass
-        current_app.logger.exception("No se pudo abrir conexión a BD: %s", e)
-        raise
+def get_conn_and_cursor(retries=15, delay=2):
+    for i in range(1, retries + 1):
+        try:
+            conn = mysql.connector.connect(**DB_CONFIG)
+            print(f"Conectado a MySQL en intento {i}")
+            return conn, conn.cursor(dictionary=True)
+
+        except Error as e:
+            print(f"⏳ Intento {i}/{retries} - esperando MySQL → {e}")
+            time.sleep(delay)
+
+    raise RuntimeError("No se pudo conectar a MySQL.")
 
 
 def require_role(*allowed_roles):
@@ -1594,5 +1582,5 @@ def admin_api_materia_update():
             if conn: conn.close()
         except: pass
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)

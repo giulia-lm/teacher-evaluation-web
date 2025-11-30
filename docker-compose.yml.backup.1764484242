@@ -1,0 +1,37 @@
+# docker-compose.yml (corregido)
+services:
+db:
+  image: mysql:8.0
+  environment:
+    MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    MYSQL_DATABASE: ${DB_NAME}
+    MYSQL_USER: ${DB_USER}
+    MYSQL_PASSWORD: ${DB_PASS}
+  volumes:
+    - db_data:/var/lib/mysql
+    - ./BD_evaluaciones.sql:/docker-entrypoint-initdb.d/BD_evaluaciones.sql:ro
+  # ports:   <-- quitar esto evita conflictos con MySQL local
+  #  - "3306:3306"
+
+
+  web:
+    build: .
+    environment:
+      - FLASK_ENV=production
+      - FLASK_APP=app.py
+      - FLASK_RUN_HOST=0.0.0.0
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_NAME=${DB_NAME}
+      - SECRET_KEY=${SECRET_KEY}
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    # volumes:
+    #   - ./:/app:rw
+
+volumes:
+  db_data:

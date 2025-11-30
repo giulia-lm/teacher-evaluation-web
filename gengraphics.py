@@ -160,26 +160,3 @@ def figs_to_pdf(figures, pdf_title="teacher_metrics.pdf", doc_title="Reporte de 
 
                 pdf.savefig(fig_page)
                 plt.close(fig_page)
-"""
-def figs_to_pdf(figures, pdf_title="teacher_metrics.pdf",doc_title="Reporte de Métricas"):
-    with PdfPages(pdf_title, metadata={'Title': doc_title}) as pdf:   
-        for _, fig in figures.items():
-            plt.figure(fig)   
-            pdf.savefig()
-            plt.close(fig)
-
-data = [{'form_id': 3, 'form_title': 'Materia: Ingeniería de Software', 'materia': 'Ingeniería de Software', 'question_id': 13, 'question_text': 'El profesor explica los conceptos claramente.', 'answer_id': 24, 'answer_text': 'Muy de acuerdo'},
-        {'form_id': 3, 'form_title': 'Materia: Ingeniería de Software', 'materia': 'Ingeniería de Software', 'question_id': 14, 'question_text': 'El profesor fomenta la participación.', 'answer_id': 25, 'answer_text': 'En desacuerdo'}, 
-        {'form_id': 3, 'form_title': 'Materia: Ingeniería de Software', 'materia': 'Ingeniería de Software', 'question_id': 15, 'question_text': 'El material y prácticas están relacionados con la materia.', 'answer_id': 26, 'answer_text': 'De acuerdo'}, 
-        {'form_id': 3, 'form_title': 'Materia: Ingeniería de Software', 'materia': 'Ingeniería de Software', 'question_id': 16, 'question_text': 'La evaluación refleja lo visto en clase.', 'answer_id': 27, 'answer_text': 'Muy en desacuerdo'}, 
-        {'form_id': 3, 'form_title': 'Materia: Ingeniería de Software', 'materia': 'Ingeniería de Software', 'question_id': 17, 'question_text': 'El profesor muestra interés por el aprendizaje del alumnado.', 'answer_id': 28, 'answer_text': 'De acuerdo'}, 
-        {'form_id': 3, 'form_title': 'Materia: Ingeniería de Software', 'materia': 'Ingeniería de Software', 'question_id': 18, 'question_text': 'Comentarios adicionales (texto libre).', 'answer_id': 29, 'answer_text': 'Está padre'}, 
-        {'form_id': 8, 'form_title': 'Docente: Montserrat Mariscal', 'materia': None, 'question_id': 43, 'question_text': 'El docente explica los conceptos claramente.', 'answer_id': 30, 'answer_text': 'De acuerdo'}, 
-        {'form_id': 8, 'form_title': 'Docente: Montserrat Mariscal', 'materia': None, 'question_id': 44, 'question_text': 'El docente fomenta la participación.', 'answer_id': 31, 'answer_text': 'En desacuerdo'}, 
-        {'form_id': 8, 'form_title': 'Docente: Montserrat Mariscal', 'materia': None, 'question_id': 45, 'question_text': 'El docente domina el contenido.', 'answer_id': 32, 'answer_text': 'De acuerdo'}, 
-        {'form_id': 8, 'form_title': 'Docente: Montserrat Mariscal', 'materia': None, 'question_id': 46, 'question_text': 'Los recursos son adecuados.', 'answer_id': 33, 'answer_text': 'En desacuerdo'}, 
-        {'form_id': 8, 'form_title': 'Docente: Montserrat Mariscal', 'materia': None, 'question_id': 47, 'question_text': 'El docente muestra interés por el aprendizaje.', 'answer_id': 34, 'answer_text': 'En desacuerdo'}, 
-        {'form_id': 8, 'form_title': 'Docente: Montserrat Mariscal', 'materia': None, 'question_id': 48, 'question_text': 'Comentarios adicionales (texto libre).', 'answer_id': 35, 'answer_text': 'test'}]
-
-figures, figures_base64, _ = generate_graphics(data)
-figs_to_pdf(figures, 'test2.pdf')"""
