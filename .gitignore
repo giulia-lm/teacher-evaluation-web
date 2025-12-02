@@ -3,6 +3,4 @@
 tests.py
 __pycache__/
 *.pyc
-estructura.sql
-.env
 docker-compose.yml.backup
